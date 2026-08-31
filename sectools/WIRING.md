@@ -1,45 +1,43 @@
-# Wiring EZrecon-2 SecTools into web3270
+# Porting EZrecon-2 SecTools into a TN3270 bridge
 
-This module is standalone on purpose. When it goes into `web3270/Bridge_server/`
-(where the ESM-fingerprint + MCP work already lives), the parts map like this.
-The shapes were chosen to match web3270's existing conventions so the port is
-mechanical, not a rewrite.
+This module is standalone on purpose, but it's shaped so it can move into a
+browser-based TN3270 bridge (a Node service that fronts a live 3270 session and
+exposes per-session security tools) without a rewrite. The notes below are the
+map.
 
-## Region → destination
+## Module → role in a bridge
 
-| SecTools file | web3270 destination | Notes |
-|---|---|---|
-| `lib/engagement.js` | `features/engagement.js` | Pure schema. Drop in as-is. `Finding` already matches eZrecon; `Target.esm` already matches `features/esm-fingerprint.js`'s `{product,confidence,evidence[]}`. |
-| `lib/store.js` | `features/engagement-store.js` | Same `Map` + `change`-event pattern as `features/recording.js` / `esm-store.js`. Swap the JSON persistence for Postgres in `webterm-3270-saas`. |
-| `lib/recon.js` | `features/recon.js` | Keep the CLI shell-out for the training. Later, point it at a `recon-svc` FastAPI sidecar (streams `on_stage`) — only `runRecon()`'s transport changes. |
-| `lib/tn3270.js` | drop the `real` backend; keep the shape | web3270's bridge already owns the TN3270 session (`tn3270/session.js`). Inside web3270 the adapter wraps that session object directly. |
-| `lib/bridge-backend.js` | this is the seam | It already speaks web3270's WS protocol (`connect` / `key` / `disconnect` → `status` / `screen` / `error`, mirroring `Bridge_server/mcp/bridge-client.js`). In standalone mode it's how EZrecon-2 reaches a running bridge; when the code lives *inside* web3270 you skip the WS hop and call the session object, but the frame shapes and the primitives above it don't change. |
-| `lib/cics.js` | `features/cics.js` | The primitives call the adapter interface only, so they move unchanged once the adapter points at the bridge session. Keep `steps[]`/`transcript[]` for the oracle diff. |
-| `mock-cics/` | `mock-lpar/mock-cics.js` | Fold into the existing mock-LPAR infra. This is the **critical-path fixture** — every other web3270 feature is "testable against the mocks"; CICS needs its own. The in-process version here is the spec; a TCP TN3270E mock-cics for `mock-lpar/` is the real port. |
-| `lib/report.js` | `features/report.js` | Feeds off the `Engagement` only. Add `.rec.json` recording refs + the ESM evidence trail to the same record before generating. |
-| `lib/audit.js` + the `authoriseTarget`/`requireAuthorised` gate | web3270's **server-side security-tools unlock** (`routes/security.js`, the `CAPS.securityTools` flag in `handlers/ws.js`) + a real audit sink | Today the gate is per-target with an `X-User-Id` header and a JSONL file. In web3270 it becomes: the security-tools password unlock supplies the operator identity, the per-target authorisation is an extra grant on top, and `data/audit.log` is replaced by the bridge's logger / Postgres. Keep the `denied` / `cics-active` event names. |
-| `server.js` routes | `routes/{recon,cics,engagement}.js` + `handlers/http.js` ROUTES array | Model on `routes/esm.js` / `routes/negotiate.js`. |
-| `server.js` WS cases | `handlers/ws.js` | Add `recon.stage`, `cics.run`, `engagement.subscribe` cases next to the existing `sec.*` handlers. Gate behind the server-side security-tools unlock (currently `CAPS.securityTools` is hard-coded true — see `ROADMAP.md`). |
-| `public/js/app.js` | split into `public/js/{recon,engagement,session,cics,evidence}.js` | The MVP is one file; the seams are already there (one `wireX()` + `renderX()` per panel). Route the WS pushes in `public/js/profiles.js` like the `esm.fingerprint` push. |
-| `mcp/server.js` tools | `Bridge_server/mcp/server.js` | Add `recon_*`, `cics_*`, `engagement_*` to the existing 16 tools. Same "client of the bridge" posture. Extend `.claude/skills/webterm-mcp/SKILL.md` with the recon RoE (passive by default, no active scan without written scope). |
+| SecTools module | Role once hosted in a bridge |
+|---|---|
+| `lib/engagement.js` | Pure schema. `Finding` matches eZrecon's shape; `Target.esm` matches the common `{product, confidence, evidence[]}` ESM-verdict shape. Drop in as-is. |
+| `lib/store.js` | Engagement store — a `Map` keyed by id plus a `change` event. Swap the JSON persistence for whatever the host uses. |
+| `lib/recon.js` | eZrecon integration. Keep the CLI shell-out; later point it at a streaming recon service. Only `runRecon()`'s transport changes. |
+| `lib/tn3270.js` | The adapter. In standalone mode it has three backends (mock, raw TCP, bridge WebSocket). Inside a bridge you keep the same method surface (`connect` / `type` / `press` / `waitFor` / `screen` / `fields`) and wrap the bridge's own session object instead. |
+| `lib/bridge-backend.js` | The seam. It speaks a generic bridge WS protocol (`connect` / `key` / `disconnect` → `status` / `screen` / `error`). Standalone, it's how EZrecon-2 reaches a running bridge; hosted, you skip the WS hop and call the session directly. The frame shapes and everything above them are unchanged. |
+| `lib/cics.js` | The five CICS primitives. They touch the adapter interface only, so they move unchanged. Keep `steps[]` / `transcript[]` for the oracle diff. |
+| `mock-cics/` | The CICS test fixture. An in-process fake here; a real TCP TN3270E mock is the version a bridge's test suite would want. This is the critical-path fixture — nothing else is testable without a CICS target. |
+| `lib/report.js` | Report generator. Feeds off the `Engagement` only. Add session-recording refs and the ESM evidence trail to that record before generating. |
+| `lib/audit.js` + `authoriseTarget` / `requireAuthorised` | The authorisation gate and audit log. In a host with its own operator-identity / security-tools unlock, that supplies the identity and the per-target authorisation is an extra grant on top; the JSONL file becomes the host's audit sink. Keep the `denied` / `cics-active` / `recon` / `cli` event names. |
+| `server.js` routes | Become the host's `recon` / `cics` / `engagement` routes. |
+| `server.js` WS cases | Become `recon.stage` / `cics.run` / `engagement.subscribe` handlers alongside the host's existing per-session handlers. Gate them behind the host's security-tools unlock. |
+| `public/js/app.js` | The MVP is one file; the seams are per-panel (`wireX()` + `renderX()`). Split into `recon` / `engagement` / `session` / `cics` / `evidence` modules and route the WS pushes through the host's client. |
+| `mcp/server.js` tools | Add `recon_*` / `cics_*` / `engagement_*` to the host's MCP surface, same "client of the bridge" posture. Carry the recon rules of engagement into the MCP skill: passive by default, no active scan without written scope. |
 
-## Prerequisites before it goes past localhost
+## Before it's exposed beyond localhost
 
-1. **Bridge auth** — `BRIDGE_API_KEY` on `/api/*` and the WS connect, and an
-   *enforced* server-side security-tools gate. Already tracked in
-   `web3270/Bridge_server/ROADMAP.md`; it is the prerequisite for the MCP
-   surface beyond localhost, and doubly so once recon + automated CICS are on it.
-2. **Licence** — eZrecon is "Community and Educational" (non-OSI). The
-   CLI/sidecar call is arm's length, but get Kev Milne's written OK before
-   `recon-svc` ships in a paid tier. CICSpwn stays GPL and un-linked (the
-   primitives here are clean-room; keep it that way).
-3. **Pick one repo** — `web3270` vs `webterm-3270-saas` are near-duplicates.
-   Build the port in one; don't diverge.
+- **Auth.** The host must authenticate its API and WebSocket and enforce its
+  security-tools gate server-side. Recon plus automated CICS on an
+  unauthenticated bridge is not something to ship.
+- **Licence.** eZrecon is under a non-OSI "Community and Educational" licence —
+  the CLI / service call here is arm's length, but check its terms before
+  bundling it anywhere it isn't already permitted. CICSpwn is GPL; the CICS
+  primitives here are a clean-room reimplementation of the technique, not
+  derived code — keep it that way.
 
 ## The conformance oracle
 
-`lib/cics.js` primitives record `steps[]` (exact CEMT/CEDA/CECI strings) and
-`transcript[]` (sent + screen per step). To verify against upstream:
+`lib/cics.js` primitives record `steps[]` (the exact CEMT/CEDA/CECI strings) and
+`transcript[]` (sent + screen per step). To verify against the upstream tool:
 
 ```
 1. run Python CICSpwn against GIBSON:  ./cicspwn -a CICS 127.0.0.1 23 -i -e --bypass ...

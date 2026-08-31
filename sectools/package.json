@@ -17,11 +17,12 @@
     "tn3270_library": "file:../../tn3270_library",
     "ws": "^8.18.0"
   },
+  "author": "Britley Wren Hoff",
   "credits": {
-    "eZrecon": "Kev Milne (OffensiveSec.org) and Phil Young (Soldier of Fortran)",
-    "CICSpwn": "Ayoub Elaassal (@Ayoul3), GPL — techniques reimplemented clean-room here, not linked",
-    "tn3270_library": "Britley Wren Hoff",
-    "GIBSON": "Kev Milne"
+    "eZrecon": "Kev Milne (OffensiveSec.org) and Phil Young (Soldier of Fortran) — the recon engine this shells out to",
+    "CICSpwn": "Ayoub Elaassal (@Ayoul3), GPL — the CICS techniques the primitives reimplement clean-room; no CICSpwn code is used or linked",
+    "tn3270_library": "Britley Wren Hoff — the TN3270E stack",
+    "GIBSON": "Kev Milne — the training simulator"
   },
-  "license": "SEE LICENSE IN ../ezrecon-src/LICENSE"
+  "license": "GPL-3.0-or-later"
 }

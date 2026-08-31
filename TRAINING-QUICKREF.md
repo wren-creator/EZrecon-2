@@ -187,4 +187,13 @@ cd sectools && npm test               # 19 tests, no network (in-process CICS mo
 - **CICSpwn** — **Ayoub Elaassal** ([@Ayoul3](https://github.com/ayoul3)), GPL. This build carries only three py3270 compatibility fixes; the CICS logic is unchanged.
 - **Mainframe NSE scripts** (`tn3270-*`, `cics-*`, `tso-*`, `vtam-enum`, `drda-*`, `nje-*`) — several originate with **Phil Young**'s research and are now upstreamed into nmap.
 - **GIBSON** simulator — **Kev Milne**.
-- **EZrecon-2** — this macOS-verified bundle, the setup/start scripts, the training card, and the web3270 SecTools integration work built on top of the above.
+- **EZrecon-2** — this macOS-verified bundle, the setup/start scripts, the training card, and the SecTools integration work built on top of the above.
+
+## Licence
+
+The EZrecon-2 code in this repo — `sectools/`, the shell scripts, this card — is
+**GPL-3.0-or-later** ([`LICENSE`](./LICENSE)). eZrecon and CICSpwn are **not**
+included or linked; they are separate tools with their own licences, fetched and
+run at arm's length by `./setup.sh`. eZrecon ships under a "Community and
+Educational" licence; CICSpwn is GPL. GIBSON is required for the CICS labs and is
+Kev Milne's project.

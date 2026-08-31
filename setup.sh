@@ -20,6 +20,8 @@ step()  { echo -e "\n${CYAN}── $* ──────────────
 # ── config ────────────────────────────────────────────────────────────────
 [ -f .env ] && . ./.env
 SEARX_PORT="${SEARX_PORT:-10080}"
+# eZrecon + CICSpwn are not in this repo — they're fetched from here.
+EZRECON_REPO="${EZRECON_REPO:-https://github.com/kmilne40/ezrecon.git}"
 EZ_ZIP="ezrecon/EZRecon.zip"
 CICS_ZIP="ezrecon/cicspwn-python3-fixed.zip"
 
@@ -58,6 +60,17 @@ command -v pipx >/dev/null 2>&1 && ok "pipx present" || { bad "pipx unavailable"
 
 # ── 3. unpack sources ────────────────────────────────────────────────────
 step "sources"
+# fetch eZrecon + CICSpwn (the release zips live in one repo) if not already local
+if [ ! -f "$EZ_ZIP" ] && [ ! -d ezrecon-src ]; then
+  if command -v git >/dev/null 2>&1; then
+    info "fetching eZrecon + CICSpwn from $EZRECON_REPO"
+    git clone --depth 1 "$EZRECON_REPO" ezrecon >/dev/null 2>&1 \
+      && ok "cloned into ezrecon/" \
+      || { bad "git clone $EZRECON_REPO failed — clone it into ./ezrecon manually"; fails=$((fails+1)); }
+  else
+    bad "git not found and no local $EZ_ZIP — install git or drop the eZrecon release zips in ./ezrecon/"; fails=$((fails+1))
+  fi
+fi
 if [ ! -d ezrecon-src ] || [ ! -f ezrecon-src/pyproject.toml ]; then
   if [ -f "$EZ_ZIP" ]; then
     mkdir -p ezrecon-src && ( cd ezrecon-src && unzip -oq "../$EZ_ZIP" ) && ok "ezrecon-src/ unpacked"

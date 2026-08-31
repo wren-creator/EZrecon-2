@@ -19,9 +19,21 @@ A self-contained Node app that unifies:
 - **Evidence** — every finding, recording, and CICS action in one `Engagement`
   record with a report generator (md / html / json).
 
-Nothing here is web3270-specific. The panels, the endpoints, the schema and the
-CICS primitives are written to port into `web3270/Bridge_server/` later. See
-[`WIRING.md`](./WIRING.md).
+Nothing here is bridge-specific. The panels, the endpoints, the schema and the
+CICS primitives are written to port into a browser-based TN3270 bridge later.
+See [`WIRING.md`](./WIRING.md).
+
+> **Built on the work of others.** The recon capability is **eZrecon** by
+> **Kev Milne** (OffensiveSec.org) and **Phil Young** (Soldier of Fortran). The
+> CICS techniques are from **CICSpwn** by **Ayoub Elaassal** ([@Ayoul3](https://github.com/ayoul3)),
+> reimplemented clean-room here — no CICSpwn code is used or linked. Full credits
+> and licensing below.
+
+> **Authorised use only.** This is offensive security tooling for authorised
+> penetration testing, CTF, and education (it was built for a Red Hat mainframe
+> training). Run it only against systems you own or have explicit written
+> permission to test. **GIBSON** — Kev Milne's deliberately vulnerable z/OS
+> simulator — is the safe practice target.
 
 ## Run it
 
@@ -144,7 +156,29 @@ GIBSON is the safe practice target.
 
 ## Credits
 
-- **eZrecon** — Kev Milne (OffensiveSec.org) and Phil Young (Soldier of Fortran)
-- **CICSpwn** — Ayoub Elaassal (@Ayoul3), GPL — techniques reimplemented clean-room
-- **tn3270_library** — Britley Wren Hoff
-- **GIBSON** — Kev Milne
+This tool would not exist without:
+
+- **eZrecon** — **Kev Milne** (OffensiveSec.org) and **Phil Young**
+  (Soldier of Fortran). The mainframe OSINT / recon engine. EZrecon-2 SecTools
+  shells out to the `ezrecon` CLI and normalises its output; the recon
+  intelligence is entirely theirs. eZrecon ships under its own "Community and
+  Educational" licence — see that project for terms.
+- **CICSpwn** — **Ayoub Elaassal** ([@Ayoul3](https://github.com/ayoul3)), GPL.
+  The original CICS penetration-testing tool. The five primitives in `lib/cics.js`
+  are a clean-room reimplementation of the *techniques* it demonstrates
+  (`CEMT INQUIRE TSQUEUE`, `CEMT SET FILE … OPEN ENABLE READ`, `CEDA COPY` +
+  `INSTALL`, `CEMT SET TRANSACTION … ENABLED`). No CICSpwn source is imported,
+  vendored, or linked; the Python tool is kept only as a conformance oracle to
+  diff transcripts against.
+- **tn3270_library** — **Britley Wren Hoff**. The zero-dependency TN3270/TN3270E
+  protocol stack the live-session and bridge backends use.
+- **GIBSON** — **Kev Milne**. The deliberately vulnerable z/OS training
+  simulator every test and lab in here runs against.
+- The lab exercises mirror the companion material for **_Hacking Mainframes_**.
+
+## Licence
+
+EZrecon-2 SecTools (this directory) is licensed **GPL-3.0-or-later** — see
+[`../LICENSE`](../LICENSE). It links to `tn3270_library` (also by Britley Wren
+Hoff). It does **not** include or link eZrecon or CICSpwn; those are separate
+tools with their own licences, fetched and run at arm's length by `../setup.sh`.
