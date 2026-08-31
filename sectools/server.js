@@ -102,6 +102,20 @@ async function api(req, res, url) {
     return send(res, 200, audit.readAll());
   }
 
+  // /api/cli-log — a terminal-run eZrecon command, posted by the ezrecon2 wrapper
+  if (parts.length === 2 && parts[1] === 'cli-log' && m === 'POST') {
+    const b = await readBody(req);
+    const argv = Array.isArray(b.argv) ? b.argv : [];
+    audit.record({
+      event: 'cli',
+      userId: b.userId || user,
+      target: b.target || argv[1] || null,
+      engagementId: b.engagementId || null,
+      detail: { argv, cwd: b.cwd || null, exit: b.exit, ms: b.ms, phase: b.phase || 'run' },
+    });
+    return send(res, 200, { ok: true });
+  }
+
   // /api/engagements
   if (parts.length === 2 && parts[1] === 'engagements') {
     if (m === 'GET') return send(res, 200, store.list());
@@ -138,6 +152,8 @@ async function api(req, res, url) {
           });
         }
         audit.record({ event: 'active-recon', userId: user, target: domain, engagementId: id, detail: { argv, approver: t.authorised.approver } });
+      } else {
+        audit.record({ event: 'recon', userId: user, target: domain, engagementId: id, detail: { argv } });
       }
       const action = store.startAction(id, { kind: 'recon', tool: `ezrecon ${argv.join(' ')}`, active: isActive, params: { user, domain } });
       try {

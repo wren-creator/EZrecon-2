@@ -77,7 +77,7 @@ else
   ok "cicspwn/ present"
 fi
 
-# ── 4. eZrecon (pipx) ────────────────────────────────────────────────────
+# ── 4. eZrecon (pipx) + the logging wrapper ─────────────────────────────
 step "eZrecon"
 if [ -f ezrecon-src/pyproject.toml ] && command -v pipx >/dev/null 2>&1; then
   if pipx install --force ./ezrecon-src >/dev/null 2>&1; then
@@ -85,6 +85,13 @@ if [ -f ezrecon-src/pyproject.toml ] && command -v pipx >/dev/null 2>&1; then
   else
     bad "pipx install ./ezrecon-src failed"; fails=$((fails+1))
   fi
+fi
+# ezrecon2 — same as ezrecon, but every invocation is logged (local file +
+# the SecTools audit log when the shell is up). Use it in place of ezrecon.
+if [ -x sectools/bin/ezrecon2 ]; then
+  mkdir -p "$HOME/.local/bin"
+  ln -sf "$(pwd)/sectools/bin/ezrecon2" "$HOME/.local/bin/ezrecon2"
+  ok "ezrecon2 (logging wrapper) → ~/.local/bin/ezrecon2"
 fi
 
 # ── 5. CICSpwn venv + wrapper ────────────────────────────────────────────

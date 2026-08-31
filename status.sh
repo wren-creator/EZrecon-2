@@ -18,6 +18,7 @@ echo "EZrecon-2 — status"
 echo "=================="
 
 if command -v ezrecon >/dev/null 2>&1; then y "eZrecon $(ezrecon --version 2>/dev/null | awk '{print $2}')  ($(command -v ezrecon))"; else n "ezrecon not on PATH — run ./setup.sh"; fi
+if command -v ezrecon2 >/dev/null 2>&1; then y "ezrecon2 logging wrapper  ($(command -v ezrecon2))"; else m "ezrecon2 wrapper not linked — ./setup.sh, or run sectools/bin/ezrecon2 directly"; fi
 if command -v nmap >/dev/null 2>&1; then
   nse=$(ls "$(nmap --datadir 2>/dev/null || echo /opt/homebrew/share/nmap)"/scripts 2>/dev/null | grep -icE 'tn3270|cics|tso|vtam|drda|nje' || echo 0)
   y "nmap $(nmap --version | head -1 | awk '{print $3}')  ·  ${nse} mainframe NSE scripts"

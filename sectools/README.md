@@ -112,6 +112,21 @@ Run buttons are disabled, and the API answers **403**. `infoGather` and
 stores it; the MCP server sends `SECTOOLS_USER`). It defaults to `anonymous`
 if absent.
 
+**Logging terminal eZrecon runs.** Use `ezrecon2` instead of `ezrecon` and every
+invocation is recorded — who, when, from where, the full argv, the target, and
+the exit code:
+
+```bash
+ezrecon2 email --depth 2 https://contacts.sighberbank.com
+ezrecon2 dns sighberbank.com
+```
+
+It's a pass-through wrapper (identical behaviour and exit code). It writes a
+JSON line to `~/.local/share/ezrecon2/commands.log` (`$SECTOOLS_CLI_LOG`) and,
+when the shell is running, POSTs to `/api/cli-log` so the run shows up in the
+Evidence tab and `data/audit.log` as a `cli` event. `./setup.sh` links it into
+`~/.local/bin`; `alias ezrecon=ezrecon2` in your shell rc to make it automatic.
+
 **Audit log.** `data/audit.log` — one JSON line per action, never rewritten:
 
 ```json

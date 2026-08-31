@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+# ezrecon2 — run any eZrecon command and log the invocation.
+#
+# Pass-through wrapper: `ezrecon2 <anything you'd give ezrecon>` behaves exactly
+# like `ezrecon <anything>` (same stdin/stdout/stderr/exit code) and also
+# records who ran what, when, from where, against which target, and the result.
+#
+#   ezrecon2 email --depth 2 https://contacts.sighberbank.com
+#   ezrecon2 dns sighberbank.com
+#   ezrecon2 auto sighberbank.com --report ./out
+#
+# Logs to:
+#   1. always — a JSON-lines file: $SECTOOLS_CLI_LOG
+#              (default ~/.local/share/ezrecon2/commands.log)
+#   2. if reachable — POST $SECTOOLS_URL/api/cli-log so the SecTools shell's
+#      Evidence tab / audit log picks it up  (default http://127.0.0.1:8899)
+#
+# Identity: $SECTOOLS_USER, else $USER, else 'anonymous'.
+
+set -u
+
+# ---- resolve the real ezrecon (never this wrapper) ----------------------
+self="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)/$(basename "${BASH_SOURCE[0]}")"
+real=""
+IFS=: read -ra _dirs <<< "$PATH:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin"
+for d in "${_dirs[@]}"; do
+  [ -n "$d" ] || continue
+  if [ -x "$d/ezrecon" ] && [ "$d/ezrecon" != "$self" ]; then real="$d/ezrecon"; break; fi
+done
+if [ -z "$real" ]; then
+  echo "ezrecon2: could not find the real 'ezrecon' on PATH (is it installed? run ./setup.sh)" >&2
+  exit 127
+fi
+
+user="${SECTOOLS_USER:-${USER:-anonymous}}"
+url="${SECTOOLS_URL:-http://127.0.0.1:8899}"
+logf="${SECTOOLS_CLI_LOG:-$HOME/.local/share/ezrecon2/commands.log}"
+mkdir -p "$(dirname "$logf")" 2>/dev/null || true
+
+# ---- build + emit a log record (python3 does the JSON) -----------------
+_log() {   # _log <phase> [exit] [secs]  — the eZrecon argv is in EZ2_ARGV
+  EZ2_PHASE="$1" EZ2_EXIT="${2-}" EZ2_SECS="${3-}" \
+  EZ2_USER="$user" EZ2_CWD="$PWD" EZ2_LOGF="$logf" EZ2_URL="$url" \
+  python3 - "${EZ2_ARGV[@]}" <<'PY'
+import json, os, sys, time, urllib.request
+
+argv   = sys.argv[1:]
+phase  = os.environ["EZ2_PHASE"]
+user   = os.environ["EZ2_USER"]
+cwd    = os.environ["EZ2_CWD"]
+logf   = os.environ["EZ2_LOGF"]
+url    = os.environ["EZ2_URL"]
+ex     = os.environ.get("EZ2_EXIT") or None
+secs   = os.environ.get("EZ2_SECS") or None
+
+# best-effort target: last non-flag arg that looks like a URL or a domain
+target = None
+for a in argv:
+    if a.startswith("-"):
+        continue
+    if a.startswith(("http://", "https://")) or ("." in a and "/" not in a and " " not in a):
+        target = a
+
+rec = {
+    "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    "event": "cli", "userId": user, "target": target, "cwd": cwd,
+    "phase": phase, "argv": argv,
+}
+if ex is not None:
+    rec["exit"] = int(ex)
+if secs is not None:
+    rec["secs"] = int(secs); rec["ms"] = int(secs) * 1000
+
+try:
+    with open(logf, "a") as fh:
+        fh.write(json.dumps(rec) + "\n")
+except OSError:
+    pass
+
+try:
+    body = json.dumps({k: rec[k] for k in ("userId", "target", "cwd", "phase", "argv", "exit", "ms") if k in rec}).encode()
+    req = urllib.request.Request(url.rstrip("/") + "/api/cli-log", data=body,
+                                 headers={"Content-Type": "application/json", "X-User-Id": user},
+                                 method="POST")
+    urllib.request.urlopen(req, timeout=2).read()
+except Exception:
+    pass
+PY
+}
+
+EZ2_ARGV=("$@")
+
+_log start
+start=$SECONDS
+"$real" "$@"
+rc=$?
+_log done "$rc" "$((SECONDS - start))"
+exit "$rc"

@@ -173,6 +173,10 @@ cd sectools && npm test               # 19 tests, no network (in-process CICS mo
   until you **Authorise** the target (approver + scope). Every action is written to
   `sectools/data/audit.log` with your operator id and the target domain. `SECTOOLS_LOCK_ACTIVE=true`
   hard-locks all active work.
+- **Logged eZrecon CLI.** Run `ezrecon2` instead of `ezrecon` for any command
+  (`ezrecon2 email --depth 2 https://contacts.sighberbank.com`) and the invocation is
+  recorded to `~/.local/share/ezrecon2/commands.log` and, if the shell is up, to its
+  audit log as a `cli` event. Set `SECTOOLS_USER` to your username first.
 - MCP surface: `sectools/mcp/server.js` (`recon_run`, `authorise_target`, `cics_run`, `get_audit_log`, …).
 
 ---
