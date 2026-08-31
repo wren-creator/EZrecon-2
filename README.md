@@ -1,8 +1,7 @@
 # EZrecon-2
 
-A macOS-verified mainframe reconnaissance and CICS-assessment bundle, built for a
-Red Hat mainframe security training, and the **SecTools shell** that unifies it
-into one screen.
+A macOS-verified mainframe reconnaissance and CICS-assessment bundle, built for pen-testing, 
+and the **SecTools shell** that unifies it into one screen.
 
 EZrecon-2 is **not a fork of eZrecon.** It stands on eZrecon (Kev Milne, Phil
 Young), CICSpwn (Ayoub Elaassal), the `tn3270_library` TN3270E stack, and the
