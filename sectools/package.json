@@ -1,0 +1,27 @@
+{
+  "name": "ezrecon-2-sectools",
+  "version": "0.1.0",
+  "private": true,
+  "description": "EZrecon-2 SecTools — standalone shell that unifies eZrecon recon, a live 3270 session, CICS primitives, and one engagement record. Portable into web3270 later.",
+  "type": "commonjs",
+  "main": "server.js",
+  "bin": { "ezrecon2-sectools": "server.js" },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test test/",
+    "mcp": "node mcp/server.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "tn3270_library": "file:../../tn3270_library",
+    "ws": "^8.18.0"
+  },
+  "credits": {
+    "eZrecon": "Kev Milne (OffensiveSec.org) and Phil Young (Soldier of Fortran)",
+    "CICSpwn": "Ayoub Elaassal (@Ayoul3), GPL — techniques reimplemented clean-room here, not linked",
+    "tn3270_library": "Britley Wren Hoff",
+    "GIBSON": "Kev Milne"
+  },
+  "license": "SEE LICENSE IN ../ezrecon-src/LICENSE"
+}

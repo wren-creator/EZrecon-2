@@ -1,0 +1,662 @@
+<title>Web3270 SecTools Shell</title>
+<meta name="description" content="Wireframe for a unified web3270 security-tools shell: Recon, live 3270 session, CICS primitives, and Evidence sharing one engagement record.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --paper: #f4f5f0;
+    --panel: #ffffff;
+    --fill: #ecefe6;
+    --fill-2: #e3e7d9;
+    --line: #d3d9c6;
+    --line-bold: #b6bfa4;
+
+    --ink: #21261e;
+    --ink-2: #58604f;
+    --ink-3: #8c9380;
+
+    --flow: #14746b;
+    --flow-bg: #dcefec;
+    --active: #8a5c12;
+    --active-bg: #f2ead9;
+    --scope: #ab392b;
+    --scope-bg: #f6e5e1;
+    --note: #45568a;
+    --note-bg: #e7eaf5;
+    --anno-fg: #ffffff;
+
+    --font-ui: 'IBM Plex Sans', system-ui, -apple-system, Segoe UI, sans-serif;
+    --font-cond: 'IBM Plex Sans Condensed', var(--font-ui);
+    --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+    --r: 3px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #0d100d;
+      --panel: #14180f;
+      --fill: #10130d;
+      --fill-2: #191d13;
+      --line: #2b3226;
+      --line-bold: #3c4633;
+
+      --ink: #dde2d5;
+      --ink-2: #99a38c;
+      --ink-3: #667059;
+
+      --flow: #55d1c4;
+      --flow-bg: #10261f;
+      --active: #f0b34a;
+      --active-bg: #2b2008;
+      --scope: #ff7062;
+      --scope-bg: #2c1512;
+      --note: #a2b2ea;
+      --note-bg: #161c2c;
+      --anno-fg: #10131c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #0d100d;
+    --panel: #14180f;
+    --fill: #10130d;
+    --fill-2: #191d13;
+    --line: #2b3226;
+    --line-bold: #3c4633;
+
+    --ink: #dde2d5;
+    --ink-2: #99a38c;
+    --ink-3: #667059;
+
+    --flow: #55d1c4;
+    --flow-bg: #10261f;
+    --active: #f0b34a;
+    --active-bg: #2b2008;
+    --scope: #ff7062;
+    --scope-bg: #2c1512;
+    --note: #a2b2ea;
+    --note-bg: #161c2c;
+    --anno-fg: #10131c;
+  }
+
+  * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 76rem; margin: 0 auto; padding: clamp(1.4rem, 4vw, 3rem) clamp(1rem, 4vw, 2.5rem) 5rem; }
+
+  .eyebrow {
+    font-family: var(--font-cond);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    font-size: .72rem;
+    color: var(--ink-3);
+    margin: 0 0 .55rem;
+  }
+  h1 {
+    font-weight: 600;
+    font-size: clamp(1.7rem, 4vw, 2.25rem);
+    letter-spacing: -.015em;
+    line-height: 1.12;
+    text-wrap: balance;
+    margin: 0 0 .7rem;
+  }
+  .stand { max-width: 60ch; color: var(--ink-2); margin: 0 0 1.5rem; }
+  .stand code { font-family: var(--font-mono); font-size: .85em; color: var(--ink); }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem .4rem;
+    margin-bottom: 2rem;
+  }
+  .legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: .5ch;
+    font-family: var(--font-cond);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-size: .66rem;
+    color: var(--ink-2);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    padding: .3rem .55rem;
+    background: var(--panel);
+  }
+  .sw { width: .8rem; height: .8rem; border-radius: 2px; flex: none; }
+  .sw.flow { background: var(--flow); }
+  .sw.active { background: var(--active); }
+  .sw.scope { background: var(--scope); }
+  .sw.note { background: var(--note); }
+
+  .theme-toggle {
+    float: right;
+    font-family: var(--font-cond);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    font-size: .66rem;
+    color: var(--ink-2);
+    background: var(--panel);
+    border: 1px solid var(--line-bold);
+    border-radius: var(--r);
+    padding: .38rem .7rem;
+    cursor: pointer;
+  }
+  .theme-toggle:hover { color: var(--ink); border-color: var(--flow); }
+
+  /* ---------------- the shell mock ---------------- */
+  .mockscroll { overflow-x: auto; padding-bottom: .5rem; }
+  .shell {
+    min-width: 60rem;
+    border: 1.5px solid var(--line-bold);
+    border-radius: 6px;
+    background: var(--panel);
+    display: grid;
+    grid-template-columns: 1fr 19rem;
+    grid-template-areas:
+      "topbar topbar"
+      "tabs   tabs"
+      "main   rail";
+    overflow: hidden;
+  }
+
+  .topbar {
+    grid-area: topbar;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: .7rem 1rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--fill);
+    font-size: .82rem;
+  }
+  .topbar .lab { font-family: var(--font-cond); text-transform: uppercase; letter-spacing: .12em; font-size: .62rem; color: var(--ink-3); }
+  .topbar .eng { font-weight: 600; }
+  .pill {
+    font-family: var(--font-cond);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    font-size: .6rem;
+    border-radius: var(--r);
+    padding: .22rem .5rem;
+    border: 1px solid transparent;
+  }
+  .pill.scope { color: var(--scope); background: var(--scope-bg); border-color: color-mix(in srgb, var(--scope) 35%, transparent); }
+  .pill.unlock { color: var(--active); background: var(--active-bg); border-color: color-mix(in srgb, var(--active) 35%, transparent); }
+  .phase { margin-left: auto; display: flex; align-items: center; gap: .4ch; font-family: var(--font-mono); font-size: .72rem; color: var(--ink-3); }
+  .phase b { color: var(--flow); font-weight: 600; }
+
+  .tabs {
+    grid-area: tabs;
+    display: flex;
+    gap: .1rem;
+    padding: 0 .6rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+  }
+  .tab {
+    font-family: var(--font-ui);
+    font-size: .82rem;
+    font-weight: 500;
+    color: var(--ink-2);
+    background: none;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    padding: .7rem .9rem;
+    cursor: pointer;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--flow); font-weight: 600; }
+  .tab.ghost { margin-left: auto; color: var(--ink-3); font-family: var(--font-mono); font-size: .74rem; }
+
+  .main { grid-area: main; padding: 1rem; border-right: 1px solid var(--line); min-height: 30rem; }
+  .rail { grid-area: rail; padding: 1rem .85rem; background: var(--fill); }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; grid-template-areas: "topbar" "tabs" "main" "rail"; }
+    .main { border-right: 0; border-bottom: 1px solid var(--line); }
+  }
+
+  /* view switching */
+  .view[hidden] { display: none; }
+  .view-h {
+    display: flex; align-items: baseline; gap: .6rem;
+    font-family: var(--font-cond); text-transform: uppercase; letter-spacing: .12em;
+    font-size: .64rem; color: var(--ink-3);
+    margin: 0 0 .7rem;
+  }
+  .view-h .n { color: var(--flow); font-family: var(--font-mono); letter-spacing: 0; }
+
+  /* generic wire pieces */
+  .box { border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); }
+  .box.inset { background: var(--fill); }
+  .row { display: flex; align-items: center; gap: .5rem; }
+  .btn {
+    font-family: var(--font-ui); font-size: .74rem; font-weight: 500;
+    color: var(--ink); background: var(--panel);
+    border: 1px solid var(--line-bold); border-radius: var(--r);
+    padding: .3rem .6rem; cursor: default; white-space: nowrap;
+  }
+  .btn.pri { border-color: var(--flow); color: var(--flow); }
+  .send {
+    font-family: var(--font-cond); text-transform: uppercase; letter-spacing: .06em;
+    font-size: .58rem; font-weight: 600;
+    color: var(--flow); background: var(--flow-bg);
+    border: 1px dashed color-mix(in srgb, var(--flow) 50%, transparent);
+    border-radius: var(--r); padding: .18rem .42rem; white-space: nowrap;
+  }
+  .ph { color: var(--ink-3); }
+  .mono { font-family: var(--font-mono); }
+  .roe {
+    display: flex; gap: .5rem; align-items: baseline;
+    border-left: 2px solid var(--scope);
+    background: var(--scope-bg);
+    padding: .4rem .6rem; border-radius: 0 var(--r) var(--r) 0;
+    font-size: .74rem; color: var(--ink); margin: 0 0 .8rem;
+  }
+  .roe b { font-family: var(--font-cond); text-transform: uppercase; letter-spacing: .08em; font-size: .6rem; color: var(--scope); flex: none; }
+
+  .anno {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.15rem; height: 1.15rem; border-radius: 50%;
+    background: var(--note); color: var(--anno-fg);
+    font-family: var(--font-mono); font-size: .68rem; font-weight: 600;
+    vertical-align: middle; flex: none;
+  }
+
+  /* findings table */
+  table.find { width: 100%; border-collapse: collapse; font-size: .76rem; }
+  table.find th {
+    text-align: left; font-family: var(--font-cond); text-transform: uppercase;
+    letter-spacing: .08em; font-size: .58rem; color: var(--ink-3); font-weight: 600;
+    padding: .35rem .5rem; border-bottom: 1px solid var(--line);
+  }
+  table.find td { padding: .4rem .5rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  table.find tr:last-child td { border-bottom: 0; }
+  .sev { font-family: var(--font-cond); font-weight: 600; font-size: .58rem; letter-spacing: .06em; padding: .12rem .38rem; border-radius: 2px; }
+  .sev.h { color: var(--scope); background: var(--scope-bg); }
+  .sev.m { color: var(--active); background: var(--active-bg); }
+  .sev.l { color: var(--ink-2); background: var(--fill-2); }
+  .sev.i { color: var(--ink-3); background: var(--fill); }
+
+  /* targets rail */
+  .rail-h { font-family: var(--font-cond); text-transform: uppercase; letter-spacing: .12em; font-size: .62rem; color: var(--ink-3); margin: 0 0 .6rem; }
+  .tgt { border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); padding: .55rem .6rem; margin-bottom: .55rem; }
+  .tgt .addr { font-family: var(--font-mono); font-size: .74rem; font-weight: 500; word-break: break-all; }
+  .tgt .meta { font-size: .68rem; color: var(--ink-2); margin: .2rem 0 .45rem; }
+  .tgt .prov { display: inline-block; font-family: var(--font-cond); text-transform: uppercase; letter-spacing: .05em; font-size: .54rem; color: var(--flow); background: var(--flow-bg); border-radius: 2px; padding: .1rem .34rem; margin-bottom: .35rem; }
+  .tgt .acts { display: flex; gap: .3rem; flex-wrap: wrap; }
+  .fromline { font-family: var(--font-mono); font-size: .6rem; color: var(--flow); margin-top: .4rem; }
+
+  /* session view */
+  .split { display: grid; grid-template-columns: 1fr 15rem; gap: .7rem; }
+  @media (max-width: 720px) { .split { grid-template-columns: 1fr; } }
+  .crt {
+    font-family: var(--font-mono); font-size: .68rem; line-height: 1.5;
+    background: var(--fill); border: 1px solid var(--line); border-radius: var(--r);
+    padding: .7rem; white-space: pre; overflow-x: auto; color: var(--ink-2);
+  }
+  .sectool { border: 1px solid var(--line); border-radius: var(--r); padding: .4rem .5rem; margin-bottom: .35rem; font-size: .68rem; }
+  .sectool .t { font-family: var(--font-cond); text-transform: uppercase; letter-spacing: .07em; font-size: .58rem; font-weight: 600; color: var(--ink-2); }
+  .sectool.on { border-color: color-mix(in srgb, var(--active) 45%, var(--line)); }
+  .sectool.on .t { color: var(--active); }
+  .rec-dot { color: var(--scope); }
+  .aidbar { margin-top: .6rem; font-family: var(--font-mono); font-size: .62rem; color: var(--ink-3); border: 1px solid var(--line); border-radius: var(--r); padding: .35rem .5rem; }
+
+  /* cics view */
+  .prim { border: 1px solid var(--line); border-radius: var(--r); padding: .55rem .65rem; margin-bottom: .5rem; }
+  .prim .nm { font-weight: 600; font-size: .8rem; }
+  .prim .ds { font-size: .7rem; color: var(--ink-2); margin: .15rem 0 .45rem; }
+  .prim .res { font-family: var(--font-mono); font-size: .66rem; color: var(--ink-2); background: var(--fill); border-radius: 2px; padding: .3rem .45rem; margin-top: .4rem; }
+  .prim .recref { font-family: var(--font-mono); font-size: .6rem; color: var(--flow); margin-top: .3rem; }
+  .prim.act { border-color: color-mix(in srgb, var(--active) 45%, var(--line)); }
+  .badge-act { font-family: var(--font-cond); text-transform: uppercase; letter-spacing: .06em; font-size: .54rem; font-weight: 600; color: var(--active); background: var(--active-bg); border-radius: 2px; padding: .1rem .34rem; }
+
+  /* evidence view */
+  .ev { display: grid; grid-template-columns: 1fr 12rem; gap: .8rem; }
+  @media (max-width: 720px) { .ev { grid-template-columns: 1fr; } }
+  .tl { list-style: none; margin: 0; padding: 0; font-size: .72rem; }
+  .tl li { padding: .3rem 0 .3rem .9rem; border-left: 1px solid var(--line-bold); position: relative; color: var(--ink-2); }
+  .tl li::before { content: ""; position: absolute; left: -3px; top: .62rem; width: 5px; height: 5px; border-radius: 50%; background: var(--flow); }
+  .tl li b { color: var(--ink); font-weight: 500; }
+  .counts { font-family: var(--font-mono); font-size: .72rem; color: var(--ink-2); }
+  .counts div { display: flex; justify-content: space-between; padding: .2rem 0; border-bottom: 1px dotted var(--line); }
+  .counts b { color: var(--ink); }
+
+  /* ---------------- data flow strip ---------------- */
+  .flowstrip {
+    margin-top: 2.4rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--panel);
+    padding: 1.1rem 1.1rem 1.3rem;
+  }
+  .flowstrip h2, .callouts h2, .regionmap h2 {
+    font-family: var(--font-cond); text-transform: uppercase; letter-spacing: .12em;
+    font-size: .66rem; color: var(--ink-3); font-weight: 600; margin: 0 0 1rem;
+  }
+  .steps { display: flex; align-items: stretch; gap: .5rem; overflow-x: auto; padding-bottom: .3rem; }
+  .step { flex: 1 1 0; min-width: 8.5rem; border: 1px solid var(--line); border-radius: var(--r); padding: .55rem .6rem; background: var(--fill); }
+  .step .k { font-family: var(--font-cond); text-transform: uppercase; letter-spacing: .07em; font-size: .56rem; color: var(--flow); font-weight: 600; }
+  .step .v { font-size: .72rem; font-weight: 600; margin: .1rem 0 .2rem; }
+  .step .d { font-size: .64rem; color: var(--ink-2); }
+  .arrow { align-self: center; color: var(--flow); font-family: var(--font-mono); font-size: 1rem; flex: none; }
+  .flownote { margin: 1rem 0 0; font-size: .74rem; color: var(--ink-2); }
+  .flownote code { font-family: var(--font-mono); font-size: .9em; color: var(--ink); }
+
+  /* ---------------- callouts + region map ---------------- */
+  .callouts, .regionmap { margin-top: 2.4rem; }
+  .co-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: .7rem; }
+  .co { border: 1px solid var(--line); border-radius: var(--r); padding: .7rem .8rem; background: var(--panel); font-size: .78rem; color: var(--ink-2); }
+  .co .h { display: flex; align-items: center; gap: .5rem; font-weight: 600; color: var(--ink); margin-bottom: .3rem; }
+  .co code { font-family: var(--font-mono); font-size: .88em; color: var(--ink); }
+
+  .regionmap table { width: 100%; border-collapse: collapse; font-size: .76rem; }
+  .regionmap th { text-align: left; font-family: var(--font-cond); text-transform: uppercase; letter-spacing: .08em; font-size: .58rem; color: var(--ink-3); font-weight: 600; padding: .4rem .5rem; border-bottom: 1px solid var(--line-bold); }
+  .regionmap td { padding: .45rem .5rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .regionmap td.f { font-family: var(--font-mono); font-size: .72rem; color: var(--ink); }
+  .regionmap tr:last-child td { border-bottom: 0; }
+  .tag-new { font-family: var(--font-cond); text-transform: uppercase; letter-spacing: .06em; font-size: .52rem; font-weight: 600; color: var(--flow); background: var(--flow-bg); border-radius: 2px; padding: .08rem .32rem; }
+  .tag-keep { font-family: var(--font-cond); text-transform: uppercase; letter-spacing: .06em; font-size: .52rem; font-weight: 600; color: var(--ink-3); background: var(--fill-2); border-radius: 2px; padding: .08rem .32rem; }
+
+  footer { margin-top: 3rem; border-top: 1px solid var(--line-bold); padding-top: 1rem; font-family: var(--font-mono); font-size: .72rem; color: var(--ink-3); }
+
+  a { color: var(--flow); }
+  :focus-visible { outline: 2px solid var(--flow); outline-offset: 2px; border-radius: 2px; }
+</style>
+
+<div class="wrap">
+  <button class="theme-toggle" type="button">Theme</button>
+  <p class="eyebrow">Wireframe · web3270 security tools</p>
+  <h1>Web3270 SecTools Shell</h1>
+  <p class="stand">One client, four surfaces, one engagement record. Recon and CICS are added as
+    panels around the existing live 3270 session and Security Tools, not embedded as code.
+    Every finding carries a typed <span class="send" style="border-style:solid">Send to</span> action, so data moves
+    Recon → Targets → Session → CICS → Evidence. Click the tabs in the mock to switch the main panel.</p>
+
+  <div class="legend">
+    <span><i class="sw flow"></i> data flow / interactive</span>
+    <span><i class="sw active"></i> active · security-gated</span>
+    <span><i class="sw scope"></i> scope / rules of engagement</span>
+    <span><i class="sw note"></i> <span class="anno" style="width:1rem;height:1rem;font-size:.6rem">n</span> annotation</span>
+  </div>
+
+  <!-- ================= THE SHELL ================= -->
+  <div class="mockscroll">
+    <div class="shell">
+
+      <div class="topbar">
+        <span class="lab">Engagement</span>
+        <span class="eng">Sighberbank — Q3 external + CICS</span>
+        <span class="pill scope">Scope · sighberbank.com + auth'd LPARs</span>
+        <span class="pill unlock">Security Tools · unlocked</span>
+        <span class="phase">recon <b>▸ access ◂</b> exploit ▸ report</span>
+      </div>
+
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" aria-selected="false" data-view="recon">Recon</button>
+        <button class="tab" role="tab" aria-selected="true" data-view="session">Session</button>
+        <button class="tab" role="tab" aria-selected="false" data-view="cics">CICS</button>
+        <button class="tab" role="tab" aria-selected="false" data-view="evidence">Evidence</button>
+        <span class="tab ghost">＋ raw 3270</span>
+      </div>
+
+      <div class="main">
+
+        <!-- ---- RECON ---- -->
+        <section class="view" data-view="recon" hidden>
+          <p class="view-h"><span class="n">01</span> Recon — pre-engagement OSINT + fingerprint</p>
+          <div class="roe"><b>RoE</b> Passive by default. Active scan (<span class="mono">ports</span>, <span class="mono">nse</span>) needs per-host authorisation.</div>
+          <div class="box inset" style="padding:.55rem;margin-bottom:.7rem">
+            <div class="row" style="flex-wrap:wrap;gap:.4rem">
+              <span class="mono" style="font-size:.74rem">domain</span>
+              <span class="box" style="padding:.28rem .5rem;font-size:.74rem;flex:1;min-width:9rem">sighberbank.com</span>
+              <span class="btn pri">Auto sweep ▸</span>
+              <span class="btn">Passive only ✓</span>
+            </div>
+            <div class="mono" style="font-size:.64rem;color:var(--ink-3);margin-top:.45rem">dns · whois · crt.sh · subdomains · wayback · docmeta · harvest · fingerprint ✓ &nbsp;— 22 findings</div>
+          </div>
+          <div class="box" style="padding:.2rem .3rem">
+            <table class="find">
+              <thead><tr><th>Sev</th><th>Category</th><th>Value</th><th>Source</th><th></th></tr></thead>
+              <tbody>
+                <tr><td><span class="sev h">HIGH</span></td><td>fingerprint</td><td class="mono">tso.sighberbank.com · LIKELY MAINFRAME 82%</td><td>ports</td><td><span class="send">Add as target ▸</span></td></tr>
+                <tr><td><span class="sev m">MED</span></td><td>subdomain</td><td class="mono">cicsa.sighberbank.com · 10.44.2.20</td><td>passive</td><td><span class="send">Add as target ▸</span></td></tr>
+                <tr><td><span class="sev m">MED</span></td><td>docmeta</td><td class="mono">author MJONES — runbook.pdf</td><td>docmeta</td><td><span class="send">Add to people ▸</span></td></tr>
+                <tr><td><span class="sev l">LOW</span></td><td>dns</td><td class="mono">MX → *.mail.protection.outlook.com</td><td>dns</td><td></td></tr>
+                <tr><td><span class="sev i">INFO</span></td><td>wayback</td><td class="mono">/jcl/BKUP01.jcl (archived 2019)</td><td>wayback</td><td><span class="send">Open ▸</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p style="font-size:.74rem;color:var(--ink-2);margin:.7rem 0 0"><span class="anno">1</span>&nbsp; Every finding row exposes a typed <b>Send to…</b> (Target / People / Notes / Session). Recon runs via a Python sidecar; the panel only renders the <code class="mono">Finding[]</code>.</p>
+        </section>
+
+        <!-- ---- SESSION ---- -->
+        <section class="view" data-view="session" hidden>
+          <p class="view-h"><span class="n">02</span> Session — live 3270 + Security Tools (unchanged)</p>
+          <div class="split">
+            <div>
+              <div class="crt">  APPLID: CICS          SIGHBERBANK z/OS
+
+  DFHCE3520  Please type your userid and password
+
+  Userid . . . . ________
+  Password . . . ________
+
+  Groupid  . . . ________
+  New Password . ________
+
+  PF3=Exit   ENTER=Sign on
+</div>
+              <div class="aidbar">PF1 PF2 PF3 PF4 PF5 PF6 PF7 PF8 PF9 PF10 PF11 PF12 · PA1 PA2 · CLEAR · ENTER</div>
+            </div>
+            <div>
+              <div class="sectool"><span class="t">Field Map Overlay</span></div>
+              <div class="sectool"><span class="t">Attribute Byte Inspector</span></div>
+              <div class="sectool on"><span class="t">MITM</span> · armed</div>
+              <div class="sectool on"><span class="t">Traffic Recorder</span> <span class="rec-dot">● REC</span> 00:04:12</div>
+              <div class="sectool"><span class="t">Anomaly Detector</span> · 0 flags</div>
+              <div class="sectool on"><span class="t">ESM Fingerprint</span><br>RACF · 0.85 · <span class="mono" style="font-size:.62rem">DFHCE35xx msgid</span> <span class="anno">3</span></div>
+              <div class="sectool"><span class="t">CICS Toolkit</span> · <span class="send">opens CICS tab ▸</span></div>
+            </div>
+          </div>
+          <p style="font-size:.74rem;color:var(--ink-2);margin:.7rem 0 0"><span class="anno">2</span>&nbsp; Existing Security Tools untouched. CICS primitives run <b>in this session</b>, so MITM + Recorder + Anomaly capture them for free. &nbsp; <span class="anno">3</span>&nbsp; ESM verdict reconciles with the Recon fingerprint on the same Target.</p>
+        </section>
+
+        <!-- ---- CICS ---- -->
+        <section class="view" data-view="cics" hidden>
+          <p class="view-h"><span class="n">03</span> CICS — attack primitives on the tn3270 stack</p>
+          <div class="box inset mono" style="padding:.45rem .6rem;margin-bottom:.6rem;font-size:.72rem">
+            Target tso.sighberbank.com:23 &nbsp;·&nbsp; APPLID [CICS] <span class="ph">(from negotiate)</span> &nbsp;·&nbsp; Session #s3 live
+          </div>
+          <div class="roe"><b>State change</b> These install transactions and flip file attributes. Authorised targets only.</div>
+
+          <div class="prim">
+            <div class="row" style="justify-content:space-between"><span class="nm">Recon (-i)</span><span class="btn">Run</span></div>
+            <div class="ds">Reachable txns, z/OS + CICS levels, sysid, LU, HLQs, users, spool, ESM.</div>
+            <div class="res">z/OS 2.05 · CICS TS 73 · SYSID GIB1 · HLQ GIBSON.BANK.** · ESM present</div>
+          </div>
+          <div class="prim">
+            <div class="row" style="justify-content:space-between"><span class="nm">Enumerate TSQ</span><span class="btn">Run</span></div>
+            <div class="ds">CEMT INQUIRE TSQUEUE — depth, owning transaction.</div>
+            <div class="res">3 queues · GIBSON(2) BANKAUD(0) PWNLOG(0)</div>
+            <div class="row" style="margin-top:.35rem;justify-content:space-between"><span class="recref">recorded ▸ #rec4 · 21:04:11</span><span class="send">results → Evidence ▸</span></div>
+          </div>
+          <div class="prim">
+            <div class="row" style="justify-content:space-between"><span class="nm">Read file (CEMT SET)</span><span class="row"><span class="box" style="padding:.16rem .4rem;font-size:.68rem">FILEB</span><span class="btn">Run</span></span></div>
+            <div class="ds">Open + enable + browse a VSAM file, flipping attributes if needed.</div>
+            <div class="res">FILEB → OPEN ENA READ · 40 records read</div>
+          </div>
+          <div class="prim act">
+            <div class="row" style="justify-content:space-between"><span class="row" style="gap:.4rem"><span class="nm">RACF bypass (CEDA)</span><span class="badge-act">active</span></span><span class="btn">Run</span></div>
+            <div class="ds">Copy CEMT→CSPS and CECI→CSPK into a controlled group, then INSTALL.</div>
+            <div class="res">CSPS installed · CSPK installed — enum now works where blocked</div>
+          </div>
+          <div class="prim">
+            <div class="row" style="justify-content:space-between"><span class="nm">Enable transactions</span><span class="row"><span class="box" style="padding:.16rem .4rem;font-size:.68rem">ALL</span><span class="btn">Run</span></span></div>
+            <div class="ds">Re-enable disabled transactions (or one id).</div>
+          </div>
+          <p style="font-size:.74rem;color:var(--ink-2);margin:.6rem 0 0"><span class="anno">4</span>&nbsp; Native primitives (clean-room of the technique), <b>not</b> embedded CICSpwn. Python CICSpwn stays checked in as the diff oracle for <code class="mono">cics.test.js</code>.</p>
+        </section>
+
+        <!-- ---- EVIDENCE ---- -->
+        <section class="view" data-view="evidence" hidden>
+          <p class="view-h"><span class="n">04</span> Evidence — one engagement record</p>
+          <div class="ev">
+            <div>
+              <ul class="tl">
+                <li><b>20:41</b> Recon sweep — sighberbank.com (22 findings)</li>
+                <li><b>20:52</b> Target added — tso.sighberbank.com:23 <span class="mono" style="font-size:.62rem">(from finding #14)</span></li>
+                <li><b>20:53</b> Session #s3 opened — profile minted from target</li>
+                <li><b>20:55</b> ESM Fingerprint — RACF confirmed 0.85 (reconciles recon 82%)</li>
+                <li><b>21:04</b> CICS · Enumerate TSQ — 3 queues</li>
+                <li><b>21:09</b> CICS · Read file FILEB — 40 records</li>
+                <li><b>21:14</b> CICS · RACF bypass — CSPS + CSPK installed</li>
+              </ul>
+            </div>
+            <div>
+              <div class="counts">
+                <div><span>Targets</span><b>3</b></div>
+                <div><span>Findings</span><b>27</b></div>
+                <div><span>Sessions</span><b>2</b></div>
+                <div><span>Recordings</span><b>4</b></div>
+                <div><span>CICS actions</span><b>5</b></div>
+              </div>
+              <div style="margin-top:.7rem;display:flex;flex-direction:column;gap:.35rem">
+                <span class="btn pri">Generate report ▾</span>
+                <span class="btn">Export engagement.json</span>
+                <span class="btn">Open recording ▾</span>
+              </div>
+            </div>
+          </div>
+          <p style="font-size:.74rem;color:var(--ink-2);margin:.8rem 0 0"><span class="anno">5</span>&nbsp; One record: eZrecon <code class="mono">Session/Finding</code> schema + <code class="mono">.rec.json</code> refs + CICS actions + timeline. The report generator reads only this.</p>
+        </section>
+
+      </div>
+
+      <div class="rail">
+        <p class="rail-h">Targets · 3 &nbsp; <span style="color:var(--flow)">persistent</span></p>
+
+        <div class="tgt">
+          <span class="prov">recon · fp 82%</span>
+          <div class="addr">tso.sighberbank.com:23</div>
+          <div class="meta">ESM: RACF 0.85 <span style="color:var(--flow)">(in-session ✓)</span></div>
+          <div class="acts"><span class="btn pri">Connect</span><span class="btn">Assess CICS</span></div>
+          <div class="fromline">▲ from Recon finding #14</div>
+        </div>
+
+        <div class="tgt">
+          <span class="prov">recon · fp 68%</span>
+          <div class="addr">cicsa.sighberbank.com:23</div>
+          <div class="meta">ESM: — &nbsp; not yet connected</div>
+          <div class="acts"><span class="btn pri">Connect</span><span class="btn">Assess CICS</span></div>
+        </div>
+
+        <div class="tgt">
+          <span class="prov" style="color:var(--ink-3);background:var(--fill-2)">manual</span>
+          <div class="addr">10.44.2.19:992</div>
+          <div class="meta">TLS · TN3270E · LU pool</div>
+          <div class="acts"><span class="btn pri">Connect</span></div>
+        </div>
+
+        <div style="font-size:.66rem;color:var(--ink-3);margin-top:.5rem">
+          ＋ Add target &nbsp;·&nbsp; from: Recon / Manual / Import
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= DATA FLOW ================= -->
+  <div class="flowstrip">
+    <h2>How data moves</h2>
+    <div class="steps">
+      <div class="step"><div class="k">Recon</div><div class="v">Finding</div><div class="d">fingerprint / subdomain / doc author</div></div>
+      <span class="arrow">→</span>
+      <div class="step"><div class="k">Send to · Target</div><div class="v">Targets rail</div><div class="d">provenance chip keeps the link back</div></div>
+      <span class="arrow">→</span>
+      <div class="step"><div class="k">Connect</div><div class="v">Session</div><div class="d">bridge mints a profile, opens 3270, ESM fp starts</div></div>
+      <span class="arrow">→</span>
+      <div class="step"><div class="k">Assess CICS</div><div class="v">Primitive</div><div class="d">APPLID prefilled; runs in the live session</div></div>
+      <span class="arrow">→</span>
+      <div class="step"><div class="k">Attach</div><div class="v">Evidence</div><div class="d">findings + recording + action + timeline</div></div>
+    </div>
+    <p class="flownote">The buttons and the MCP tools call the <b>same bridge endpoints</b>. Build
+      <code>/api/recon</code>, <code>/api/cics</code>, <code>/api/engagement</code> once; the UI and the AI Assist panel both drive them.</p>
+  </div>
+
+  <!-- ================= CALLOUTS ================= -->
+  <div class="callouts">
+    <h2>Annotations</h2>
+    <div class="co-grid">
+      <div class="co"><div class="h"><span class="anno">1</span> Typed Send-to</div>Findings are <code>{category,key,value,source,severity,meta}</code> (eZrecon's shape). The row action names the destination; nothing is free-text.</div>
+      <div class="co"><div class="h"><span class="anno">2</span> Instrumented for free</div>CICS primitives are macros on the existing session, so MITM, Traffic Recorder and Anomaly Detector see every 3270 write with no extra wiring.</div>
+      <div class="co"><div class="h"><span class="anno">3</span> Fingerprint reconcile</div>Recon's external guess and the in-session ESM verdict land on the same Target and are shown together. Before + during is a capability hack3270 doesn't pair.</div>
+      <div class="co"><div class="h"><span class="anno">4</span> Clean-room, not embed</div>Four primitives (~350 lines) on the tn3270 stack. GPL CICSpwn stays as the conformance oracle, never linked into the bridge.</div>
+      <div class="co"><div class="h"><span class="anno">5</span> Single record</div>Recon findings, session recordings, CICS actions and the ESM trail write into one <code>Engagement</code>. The report generator has one input.</div>
+    </div>
+  </div>
+
+  <!-- ================= REGION MAP ================= -->
+  <div class="regionmap">
+    <h2>Region → where it lives</h2>
+    <table>
+      <thead><tr><th>Shell region</th><th>Files</th><th></th></tr></thead>
+      <tbody>
+        <tr><td>Recon panel</td><td class="f">public/js/recon.js · features/recon.js · routes/recon.js</td><td><span class="tag-new">new</span></td></tr>
+        <tr><td>Targets rail + engagement</td><td class="f">public/js/engagement.js · features/engagement-store.js · routes/engagement.js</td><td><span class="tag-new">new</span></td></tr>
+        <tr><td>Session tab + Security Tools</td><td class="f">public/js/*.js · features/{esm-fingerprint,mitm,recording,traffic}.js</td><td><span class="tag-keep">keep</span></td></tr>
+        <tr><td>CICS panel + primitives</td><td class="f">public/js/cics.js · features/cics.js (macros/engine.js screen-sync)</td><td><span class="tag-new">new</span></td></tr>
+        <tr><td>Evidence + report</td><td class="f">public/js/evidence.js · features/report.js</td><td><span class="tag-new">new</span></td></tr>
+        <tr><td>AI + automation</td><td class="f">Bridge_server/mcp/server.js — add recon_* · cics_* · engagement_* tools</td><td><span class="tag-keep">extend</span></td></tr>
+        <tr><td>Test fixture</td><td class="f">mock-lpar/mock-cics.js — answers CEMT / CEDA / CECI</td><td><span class="tag-new">new · critical path</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>
+    Wireframe only. No live data. Shell = one client extended, not a new app. Pick web3270 or webterm-3270-saas as the home before building.<br><br>
+    <b style="color:var(--ink-2)">Credits</b> &nbsp; Recon capability is <b style="color:var(--ink-2)">eZrecon</b> by Kev Milne (OffensiveSec.org) and Phil Young (Soldier of Fortran), from the <i>Hacking Mainframes</i> companion material. CICS technique is from <b style="color:var(--ink-2)">CICSpwn</b> by Ayoub Elaassal (@Ayoul3, GPL) — reimplemented clean-room here, not linked. Bundle tracked as <b style="color:var(--ink-2)">EZrecon-2</b>.
+  </footer>
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var KEY = 'sectools-wf-theme';
+    var tbtn = document.querySelector('.theme-toggle');
+    function sysDark() { return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; }
+    function cur() { return root.dataset.theme || (sysDark() ? 'dark' : 'light'); }
+    function label() { tbtn.textContent = cur() === 'dark' ? 'Light' : 'Dark'; }
+    try { var s = localStorage.getItem(KEY); if (s === 'dark' || s === 'light') root.dataset.theme = s; } catch (e) {}
+    label();
+    tbtn.addEventListener('click', function () {
+      var n = cur() === 'dark' ? 'light' : 'dark';
+      root.dataset.theme = n;
+      try { localStorage.setItem(KEY, n); } catch (e) {}
+      label();
+    });
+
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab[data-view]'));
+    var views = Array.prototype.slice.call(document.querySelectorAll('.view[data-view]'));
+    function show(name) {
+      tabs.forEach(function (t) { t.setAttribute('aria-selected', String(t.dataset.view === name)); });
+      views.forEach(function (v) { v.hidden = v.dataset.view !== name; });
+    }
+    tabs.forEach(function (t) { t.addEventListener('click', function () { show(t.dataset.view); }); });
+    show('session');
+  })();
+</script>

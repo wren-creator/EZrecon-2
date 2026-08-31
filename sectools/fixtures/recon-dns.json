@@ -1,0 +1,357 @@
+{
+  "target": "example.com",
+  "started": 1788126926.9552279,
+  "started_iso": "2026-08-30T21:55:26Z",
+  "finding_count": 32,
+  "findings": [
+    {
+      "category": "dns",
+      "key": "A",
+      "value": "104.20.23.154",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "record": "A"
+      },
+      "ts": 1788126926.9937751
+    },
+    {
+      "category": "dns",
+      "key": "A",
+      "value": "172.66.147.243",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "record": "A"
+      },
+      "ts": 1788126926.9937768
+    },
+    {
+      "category": "dns",
+      "key": "AAAA",
+      "value": "2606:4700:10::ac42:93f3",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "record": "AAAA"
+      },
+      "ts": 1788126926.993778
+    },
+    {
+      "category": "dns",
+      "key": "AAAA",
+      "value": "2606:4700:10::6814:179a",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "record": "AAAA"
+      },
+      "ts": 1788126926.993779
+    },
+    {
+      "category": "dns",
+      "key": "MX",
+      "value": "0 ",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "record": "MX"
+      },
+      "ts": 1788126926.993779
+    },
+    {
+      "category": "dns",
+      "key": "NS",
+      "value": "hera.ns.cloudflare.com",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "record": "NS"
+      },
+      "ts": 1788126926.99378
+    },
+    {
+      "category": "dns",
+      "key": "NS",
+      "value": "elliott.ns.cloudflare.com",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "record": "NS"
+      },
+      "ts": 1788126926.99378
+    },
+    {
+      "category": "dns",
+      "key": "SOA",
+      "value": "mname=elliott.ns.cloudflare.com rname=dns.cloudflare.com serial=2411783310 refresh=10000 retry=2400 expire=604800 minimum=1800",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "record": "SOA"
+      },
+      "ts": 1788126926.99378
+    },
+    {
+      "category": "dns",
+      "key": "SPF",
+      "value": "v=spf1 -all",
+      "source": "dns",
+      "severity": "low",
+      "meta": {
+        "record": "TXT"
+      },
+      "ts": 1788126926.993782
+    },
+    {
+      "category": "dns",
+      "key": "SPF-policy",
+      "value": "hardfail (-all)",
+      "source": "dns",
+      "severity": "low",
+      "meta": {},
+      "ts": 1788126926.993887
+    },
+    {
+      "category": "dns",
+      "key": "TXT",
+      "value": "_k2n1y4vw3qtb4skdx9e7dxt97qrmmq9",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "record": "TXT"
+      },
+      "ts": 1788126926.993889
+    },
+    {
+      "category": "dns",
+      "key": "CAA",
+      "value": "no CAA record (any CA may issue certificates)",
+      "source": "dns",
+      "severity": "low",
+      "meta": {},
+      "ts": 1788126926.9938922
+    },
+    {
+      "category": "dns",
+      "key": "DMARC",
+      "value": "v=DMARC1;p=reject;sp=reject;adkim=s;aspf=s",
+      "source": "dns",
+      "severity": "low",
+      "meta": {},
+      "ts": 1788126927.0207932
+    },
+    {
+      "category": "dns",
+      "key": "DKIM",
+      "value": "selector 'default' present",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "selector": "default"
+      },
+      "ts": 1788126927.108955
+    },
+    {
+      "category": "dns",
+      "key": "DKIM",
+      "value": "selector 'google' present",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "selector": "google"
+      },
+      "ts": 1788126927.108959
+    },
+    {
+      "category": "dns",
+      "key": "DKIM",
+      "value": "selector 'selector1' present",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "selector": "selector1"
+      },
+      "ts": 1788126927.108961
+    },
+    {
+      "category": "dns",
+      "key": "DKIM",
+      "value": "selector 'selector2' present",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "selector": "selector2"
+      },
+      "ts": 1788126927.108962
+    },
+    {
+      "category": "dns",
+      "key": "DKIM",
+      "value": "selector 'k1' present",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "selector": "k1"
+      },
+      "ts": 1788126927.1089642
+    },
+    {
+      "category": "dns",
+      "key": "DKIM",
+      "value": "selector 'k2' present",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "selector": "k2"
+      },
+      "ts": 1788126927.1089652
+    },
+    {
+      "category": "dns",
+      "key": "DKIM",
+      "value": "selector 'dkim' present",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "selector": "dkim"
+      },
+      "ts": 1788126927.1089652
+    },
+    {
+      "category": "dns",
+      "key": "DKIM",
+      "value": "selector 'mail' present",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "selector": "mail"
+      },
+      "ts": 1788126927.1089659
+    },
+    {
+      "category": "dns",
+      "key": "DKIM",
+      "value": "selector 's1' present",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "selector": "s1"
+      },
+      "ts": 1788126927.1089668
+    },
+    {
+      "category": "dns",
+      "key": "DKIM",
+      "value": "selector 's2' present",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "selector": "s2"
+      },
+      "ts": 1788126927.108968
+    },
+    {
+      "category": "dns",
+      "key": "DKIM",
+      "value": "selector 'mandrill' present",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "selector": "mandrill"
+      },
+      "ts": 1788126927.108969
+    },
+    {
+      "category": "dns",
+      "key": "DKIM",
+      "value": "selector 'mailjet' present",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "selector": "mailjet"
+      },
+      "ts": 1788126927.10897
+    },
+    {
+      "category": "dns",
+      "key": "DKIM",
+      "value": "selector 'zoho' present",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "selector": "zoho"
+      },
+      "ts": 1788126927.108971
+    },
+    {
+      "category": "dns",
+      "key": "DKIM",
+      "value": "selector 'everlytickey1' present",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "selector": "everlytickey1"
+      },
+      "ts": 1788126927.108972
+    },
+    {
+      "category": "dns",
+      "key": "DKIM",
+      "value": "selector 'protonmail' present",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "selector": "protonmail"
+      },
+      "ts": 1788126927.108973
+    },
+    {
+      "category": "dns",
+      "key": "DKIM",
+      "value": "selector 'fm1' present",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "selector": "fm1"
+      },
+      "ts": 1788126927.108974
+    },
+    {
+      "category": "dns",
+      "key": "DKIM",
+      "value": "selector 'amazonses' present",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "selector": "amazonses"
+      },
+      "ts": 1788126927.1089752
+    },
+    {
+      "category": "dns",
+      "key": "DKIM",
+      "value": "selector 'smtpapi' present",
+      "source": "dns",
+      "severity": "info",
+      "meta": {
+        "selector": "smtpapi"
+      },
+      "ts": 1788126927.1089761
+    },
+    {
+      "category": "dns",
+      "key": "axfr",
+      "value": "zone transfer refused by all name servers",
+      "source": "axfr",
+      "severity": "info",
+      "meta": {},
+      "ts": 1788126927.113673
+    }
+  ],
+  "queries": [
+    "dns:example.com",
+    "axfr:example.com"
+  ],
+  "notes": []
+}

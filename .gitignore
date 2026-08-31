@@ -1,0 +1,21 @@
+# EZrecon-2 bundle — keep third-party, reconstructible, and runtime junk out of git.
+
+# Upstream repo (kmilne40/ezrecon) — has its own .git; holds the release zips.
+/ezrecon/
+
+# Reconstructed by ./setup.sh from the zips in ezrecon/ (eZrecon by Kev Milne &
+# Phil Young; CICSpwn by Ayoub Elaassal). Run ./setup.sh to materialise them.
+/ezrecon-src/
+/cicspwn/
+
+# runtime / build artifacts
+**/node_modules/
+**/.venv/
+**/__pycache__/
+**/*.pyc
+**/build/
+**/*.egg-info/
+sectools/data/*.json
+sectools/data/audit.log
+*.log
+.DS_Store

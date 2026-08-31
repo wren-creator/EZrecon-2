@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "ezrecon2-sectools": {
+      "command": "node",
+      "args": ["mcp/server.js"],
+      "env": { "SECTOOLS_URL": "http://127.0.0.1:8899" }
+    }
+  }
+}

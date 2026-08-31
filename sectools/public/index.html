@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EZrecon-2 SecTools</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div id="shell" class="shell">
+
+  <header class="topbar">
+    <span class="lab">Engagement</span>
+    <span id="engName" class="eng">…</span>
+    <span id="scope" class="pill scope">Scope</span>
+    <span class="phase">EZrecon-2 SecTools</span>
+    <span id="operator" class="pill op" title="click to change — logged with every action">operator: …</span>
+    <span id="exposure" class="pill" title="exposure score">exposure —</span>
+    <button id="themeBtn" class="mini" type="button">Theme</button>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" data-view="recon" role="tab">Recon</button>
+    <button class="tab" data-view="session" role="tab" aria-selected="true">Session</button>
+    <button class="tab" data-view="cics" role="tab">CICS</button>
+    <button class="tab" data-view="evidence" role="tab">Evidence</button>
+  </nav>
+
+  <main class="main">
+    <section class="view" data-view="recon" hidden>
+      <div class="roe">Passive by default. <b>Active sweep</b> (<code>ports</code>/<code>nse</code>) is disabled until the domain has an <b>authorised target</b> in the rail. Every active run is logged with your operator id and the target.</div>
+      <div class="bar">
+        <input id="reconDomain" type="text" placeholder="domain, e.g. sighberbank.com" value="sighberbank.com">
+        <button id="reconAuto" class="btn pri" type="button">Auto sweep</button>
+        <button id="reconDns" class="btn" type="button">DNS only</button>
+        <button id="reconActive" class="btn act" type="button" disabled>Active sweep</button>
+        <span id="reconStage" class="stage"></span>
+      </div>
+      <div class="scroll"><table id="findTable" class="grid">
+        <thead><tr><th>Sev</th><th>Category</th><th>Value</th><th>Source</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </section>
+
+    <section class="view" data-view="session" hidden>
+      <div id="sessionEmpty" class="empty">No live session. Connect a target from the rail →</div>
+      <div id="sessionLive" hidden>
+        <pre id="crt" class="crt"></pre>
+        <div class="bar">
+          <input id="cmdLine" type="text" placeholder="type a transaction, e.g. CEMT INQUIRE TSQUEUE(*)">
+          <button class="btn pri" data-aid="ENTER" type="button">ENTER</button>
+          <button class="btn" data-aid="PF3" type="button">PF3</button>
+          <button class="btn" data-aid="CLEAR" type="button">CLEAR</button>
+          <button id="sessDisc" class="btn" type="button">Disconnect</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view="cics" hidden>
+      <div id="cicsNoTarget" class="empty">Pick a target with <b>Assess CICS</b> from the rail →</div>
+      <div id="cicsPanel" hidden>
+        <div class="ctx mono" id="cicsCtx"></div>
+        <div class="roe">RACF bypass, file reads and enable-tran change region state. Authorised targets only.</div>
+        <div id="cicsPrims" class="prims"></div>
+        <pre id="cicsOut" class="out"></pre>
+      </div>
+    </section>
+
+    <section class="view" data-view="evidence" hidden>
+      <div class="ev">
+        <div>
+          <h3>Timeline</h3><ul id="timeline" class="tl"></ul>
+          <h3>Audit log <span class="dim">(user id · target · action)</span></h3>
+          <ul id="auditLog" class="tl audit"></ul>
+        </div>
+        <div>
+          <h3>Counts</h3>
+          <div id="counts" class="counts"></div>
+          <div class="reportbtns">
+            <a class="btn pri" id="repHtml" target="_blank">Report · HTML</a>
+            <a class="btn" id="repMd" target="_blank">Markdown</a>
+            <a class="btn" id="repJson" target="_blank">engagement.json</a>
+            <a class="btn" href="/api/audit" target="_blank">audit.log (all)</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <aside class="rail">
+    <p class="rail-h">Targets · <span id="tgtCount">0</span></p>
+    <div id="targets"></div>
+    <div class="rail-add">
+      <input id="manualAddr" type="text" placeholder="host or 'mock'">
+      <input id="manualPort" type="text" placeholder="23" value="23">
+      <button id="manualAdd" class="btn" type="button">＋ Add</button>
+      <label class="viabridge"><input id="manualBridge" type="checkbox"> via web3270 bridge</label>
+    </div>
+  </aside>
+
+  <section id="console" class="console">
+    <div class="con-head">
+      <button id="conToggle" class="con-toggle" type="button" aria-expanded="true">▾ console</button>
+      <span class="con-note">routes through the audited API — not a system shell. type <code>help</code></span>
+    </div>
+    <pre id="conOut" class="con-out"></pre>
+    <div class="con-inrow">
+      <span class="con-prompt">sectools&nbsp;$</span>
+      <input id="conIn" class="con-in" type="text" autocomplete="off" spellcheck="false" placeholder="help">
+    </div>
+  </section>
+
+  <footer class="foot">
+    <b>Recon</b> eZrecon · Kev Milne + Phil Young &nbsp;·&nbsp;
+    <b>CICS technique</b> CICSpwn · Ayoub Elaassal (clean-room here) &nbsp;·&nbsp;
+    <b>3270</b> tn3270_library · Britley Wren Hoff
+  </footer>
+</div>
+<script src="/js/app.js"></script>
+</body>
+</html>
