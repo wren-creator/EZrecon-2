@@ -136,6 +136,17 @@ function wireRecon() {
   $('#reconAuto').addEventListener('click', () => runRecon(['auto', $('#reconDomain').value.trim()]));
   $('#reconDns').addEventListener('click', () => runRecon(['dns', $('#reconDomain').value.trim()]));
   $('#reconActive').addEventListener('click', () => runRecon(['ports', $('#reconDomain').value.trim()]));
+  $('#reconClear').addEventListener('click', clearRecon);
+}
+async function clearRecon() {
+  const n = state.eng.findings.filter((f) => !String(f.source || '').startsWith('cics:')).length;
+  if (!n) { $('#reconStage').textContent = '· nothing to clear'; return; }
+  if (!window.confirm(`Clear ${n} recon finding(s)? (targets, CICS results and the audit log stay)`)) return;
+  await fetch('/api/engagement/' + state.eng.id + '/findings?scope=recon',
+    { method: 'DELETE', headers: { 'X-User-Id': operator() } });
+  state._candidates = [];
+  $('#reconStage').textContent = '· cleared';
+  await reload();
 }
 function authorisedTargetFor(domain) {
   return (state.eng.targets || []).find((t) => t.addr === domain && t.authorised);
@@ -159,19 +170,57 @@ function renderReconButtons() {
   ab.disabled = !okT;
   ab.title = okT ? 'authorised: ' + okT.authorised.approver : 'needs an authorised target for ' + (dom || 'this domain');
 }
+// Pull a host/IP out of a finding so any FQDN or IP row can become a target.
+const IP_RE = /(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)/;
+const FQDN_RE = /(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}/i;
+const FILE_EXT = /\.(jcl|cob|cbl|asm|rex|js|ts|py|txt|pdf|json|html?|xml|zip|gz|tar|log|md|sh|csv|ya?ml|cfg|ini|bak|old|env|pem|key|crt|png|jpe?g|gif|svg)$/i;
+function looksHost(s) {
+  if (!s) return null;
+  s = String(s).trim().replace(/^[a-z]+:\/\//i, '').replace(/[/?#].*$/, '').replace(/:\d+$/, '').replace(/\.$/, '').toLowerCase();
+  if (!s) return null;
+  const ip = s.match(IP_RE);
+  if (ip && ip[0] === s) return { addr: s, port: 23, kind: 'host' };
+  const fq = s.match(FQDN_RE);
+  if (fq && fq[0] === s && !FILE_EXT.test(s)) return { addr: s, port: 23, kind: 'host' };
+  return null;
+}
+function hostInText(s) {
+  const t = String(s || '').replace(/^[a-z]+:\/\//i, '');
+  const ip = t.match(IP_RE);
+  if (ip) return { addr: ip[0], port: 23, kind: 'host' };
+  const fq = t.match(FQDN_RE);
+  if (fq && !FILE_EXT.test(fq[0])) return { addr: fq[0].toLowerCase().replace(/\.$/, ''), port: 23, kind: 'host' };
+  return null;
+}
+function hostFromFinding(f) {
+  if (f.category === 'port' && f.meta && f.meta.host && /^\d+$/.test(f.key)) {
+    return { addr: f.meta.host, port: Number(f.key), kind: 'host' };
+  }
+  // key first (subdomain / fingerprint findings put the host there), then value
+  return looksHost(f.key) || hostInText(f.value);
+}
 function renderFindings() {
   renderReconButtons();
   const tb = $('#findTable tbody'); tb.innerHTML = '';
   const cands = new Map((state._candidates || []).map((c) => [c.provenanceKey, c]));
+  const have = new Set(state.eng.targets.map((t) => t.addr));
   for (const f of state.eng.findings.slice().sort((a, b) => rank(b.severity) - rank(a.severity))) {
     const tr = document.createElement('tr');
     const cand = cands.get(f.key);
     tr.innerHTML = `<td><span class="sev ${f.severity}">${f.severity}</span></td>
       <td>${esc(f.category)}/${esc(f.key)}</td><td>${esc(f.value)}</td><td>${esc(f.source)}</td><td></td>`;
-    if (cand && !state.eng.targets.some((t) => t.addr === cand.addr)) {
+    const host = cand
+      ? { kind: cand.kind, addr: cand.addr, port: cand.port }
+      : hostFromFinding(f);
+    if (host && !have.has(host.addr)) {
       const b = document.createElement('button');
-      b.className = 'send'; b.textContent = 'Add as target ▸';
-      b.onclick = () => addTarget({ kind: cand.kind, addr: cand.addr, port: cand.port, provenance: cand.provenance || ('recon:' + f.id), label: cand.addr });
+      b.className = cand ? 'send' : 'send subtle';
+      b.textContent = cand ? 'Add as target ▸' : '＋ target';
+      b.title = `add ${host.addr}:${host.port} to the rail`;
+      b.onclick = () => addTarget({
+        kind: host.kind, addr: host.addr, port: host.port, label: host.addr,
+        provenance: cand && cand.provenance ? cand.provenance : ('recon:' + f.id),
+      });
       tr.lastElementChild.appendChild(b);
     }
     tb.appendChild(tr);

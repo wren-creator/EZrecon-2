@@ -83,6 +83,29 @@ test('authorise / revoke gate active actions and write the audit log', () => {
 
 test.after(() => { try { fs.rmSync(process.env.SECTOOLS_AUDIT_LOG); } catch (e) {} });
 
+test('clearFindings drops recon findings, keeps CICS output + prunes actions', () => {
+  const s = new EngagementStore(null);
+  const eng = s.create({ name: 'C' });
+  const recon = s.addFindings(eng.id, [
+    { category: 'dns', key: 'A', value: '1.2.3.4', source: 'dns' },
+    { category: 'subdomain', key: 'tso.x', value: '1.2.3.5', source: 'passive' },
+  ]);
+  const cics = s.addFindings(eng.id, [{ category: 'cics', key: 'levels', value: 'z/OS 2.05', source: 'cics:infoGather' }]);
+  const a = s.startAction(eng.id, { kind: 'recon', tool: 'ezrecon dns' });
+  s.finishAction(eng.id, a.id, { status: 'ok', findingIds: recon.map((f) => f.id) });
+
+  const r = s.clearFindings(eng.id, { scope: 'recon' });
+  assert.equal(r.removed, 2);
+  const e = s.get(eng.id);
+  assert.equal(e.findings.length, 1);
+  assert.equal(e.findings[0].id, cics[0].id);
+  assert.equal(e.actions[0].findingIds.length, 0);
+
+  s.addFindings(eng.id, [{ category: 'dns', key: 'MX', value: 'x', source: 'dns' }]);
+  assert.equal(s.clearFindings(eng.id, { scope: 'all' }).removed, 2); // MX + the cics one
+  assert.equal(s.get(eng.id).findings.length, 0);
+});
+
 test('change events fire on mutation', () => {
   const s = new EngagementStore(null);
   const seen = [];

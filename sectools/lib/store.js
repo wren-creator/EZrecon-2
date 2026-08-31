@@ -130,6 +130,30 @@ class EngagementStore extends EventEmitter {
     return made;
   }
 
+  /**
+   * Drop findings so a new scan starts clean.
+   *   scope 'recon' (default) — everything except CICS-primitive output (source cics:*)
+   *   scope 'all'             — every finding
+   * Targets, actions and the timeline are kept; action.findingIds are pruned.
+   */
+  clearFindings(id, { scope = 'recon' } = {}) {
+    const eng = this._get(id);
+    const keep = scope === 'all'
+      ? () => false
+      : (f) => String(f.source || '').startsWith('cics:');
+    const before = eng.findings.length;
+    const kept = eng.findings.filter(keep);
+    const removedIds = new Set(eng.findings.filter((f) => !keep(f)).map((f) => f.id));
+    eng.findings = kept;
+    for (const a of eng.actions) {
+      if (Array.isArray(a.findingIds)) a.findingIds = a.findingIds.filter((x) => !removedIds.has(x));
+    }
+    const removed = before - kept.length;
+    eng.timeline.push(E.timelineEntry('recon', `Cleared ${removed} finding(s) (scope: ${scope})`));
+    this._emit(eng, 'findings:clear', { removed, scope });
+    return { removed, scope, remaining: kept.length };
+  }
+
   // ---- targets --------------------------------------------------------
   addTarget(id, attrs) {
     const eng = this._get(id);

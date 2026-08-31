@@ -251,6 +251,13 @@ async function api(req, res, url) {
       return send(res, 201, store.addTarget(id, b));
     }
 
+    if (sub === 'findings' && m === 'DELETE') {
+      const scope = url.searchParams.get('scope') === 'all' ? 'all' : 'recon';
+      const r = store.clearFindings(id, { scope });
+      audit.record({ event: 'findings-clear', userId: user, target: null, engagementId: id, detail: r });
+      return send(res, 200, r);
+    }
+
     if (sub === 'target' && parts[4]) {
       const tid = parts[4];
       const t = eng.targets.find((x) => x.id === tid);
