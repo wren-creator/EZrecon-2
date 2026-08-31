@@ -86,9 +86,48 @@ function openSession(engagementId, target) {
   });
   adapter.driver.on('disconnected', () => {
     for (const ws of entry.subscribers) { try { ws.send(JSON.stringify({ type: 'session.closed', sessionId: id })); } catch { /* */ } }
+    if (entry.useBridge && entry.bridgeRecording) bridgeStopRecording(entry, id).catch(() => {});
     liveSessions.delete(id);
   });
   return { id, entry, adapter, useMock, useBridge };
+}
+
+/** Point the web3270 bridge's per-session tools at this session: capture its
+ *  wsId and (optionally) start a Traffic Recording for it. */
+async function bridgeHookup(entry, engagementId, targetId) {
+  const drv = entry.adapter.driver;
+  const wsId = drv.wsId ?? null;
+  entry.bridgeWsId = wsId;
+  const out = { bridgeWsId: wsId, bridgeUrl: cfg.bridgeUrl };
+  try { store.updateTarget(engagementId, targetId, { bridgeWsId: wsId }); } catch { /* */ }
+  if (cfg.bridgeRecord && wsId != null && drv.httpBase) {
+    try {
+      const r = await fetch(`${drv.httpBase}/api/recording/start?session=${encodeURIComponent(wsId)}`, { method: 'POST' });
+      if (r.ok) { entry.bridgeRecording = true; out.recording = 'started'; }
+      else if (r.status === 409) { entry.bridgeRecording = true; out.recording = 'already-recording'; }
+      else out.recording = `unavailable (${r.status})`;
+    } catch { out.recording = 'unavailable'; }
+  }
+  return out;
+}
+
+async function bridgeStopRecording(entry, sessionId) {
+  const drv = entry.adapter.driver;
+  if (!drv || drv.wsId == null || !drv.httpBase) return;
+  entry.bridgeRecording = false;
+  const r = await fetch(`${drv.httpBase}/api/recording/stop?session=${encodeURIComponent(drv.wsId)}`, { method: 'POST' });
+  if (!r.ok) return;
+  const body = await r.text();
+  const dir = path.join(cfg.dataDir, 'bridge-recordings');
+  try { fs.mkdirSync(dir, { recursive: true }); } catch { /* */ }
+  const file = path.join(dir, `${entry.engagementId}_${sessionId}.rec.json`);
+  try { fs.writeFileSync(file, body); } catch { /* */ }
+  try {
+    store.addRecording(entry.engagementId, {
+      ref: `bridge:${sessionId}`, source: 'web3270-bridge', wsId: drv.wsId, path: file,
+      targetId: entry.targetId,
+    });
+  } catch { /* */ }
 }
 
 // ---------------------------------------------------------------- routes
@@ -100,6 +139,41 @@ async function api(req, res, url) {
   // /api/audit — the append-only log (user id + target per action)
   if (parts.length === 2 && parts[1] === 'audit' && m === 'GET') {
     return send(res, 200, audit.readAll());
+  }
+
+  // /api/ez — run any eZrecon command and return its output (console pass-through).
+  // argv is an array; ezrecon is spawned directly, never via a shell.
+  if (parts.length === 2 && parts[1] === 'ez' && m === 'POST') {
+    const b = await readBody(req);
+    const argv = Array.isArray(b.argv) ? b.argv.map(String) : [];
+    if (!argv.length) return send(res, 400, { error: 'argv required' });
+    const domain = argv.find((a) => /^https?:\/\//.test(a) || (a.includes('.') && !a.startsWith('-')));
+    const isActive = argv.some((x) => ACTIVE_RECON.includes(x));
+    if (isActive) {
+      if (cfg.lockActive) return send(res, 403, { error: 'active recon is hard-locked (SECTOOLS_LOCK_ACTIVE)' });
+      let eng2 = null;
+      try { eng2 = b.engagementId ? store.get(b.engagementId) : null; } catch { eng2 = null; }
+      const authT = eng2 && eng2.targets.find((x) => x.authorised && x.addr === domain);
+      if (!authT) {
+        return send(res, 403, {
+          error: `active recon (${argv.filter((x) => ACTIVE_RECON.includes(x)).join(', ')}) needs an authorised target for "${domain || '?'}" in this engagement`,
+        });
+      }
+    }
+    const t0 = Date.now();
+    try {
+      const r = await recon.runRaw(argv);
+      const ms = Date.now() - t0;
+      audit.record({
+        event: isActive ? 'active-recon' : 'cli', userId: user,
+        target: domain || argv[1] || null, engagementId: b.engagementId || null,
+        detail: { argv, exit: r.exit, ms, via: 'console' },
+      });
+      return send(res, 200, { ...r, ms });
+    } catch (e) {
+      audit.record({ event: 'cli', userId: user, target: domain || null, engagementId: b.engagementId || null, detail: { argv, error: errStr(e), via: 'console' } });
+      return send(res, 502, { error: errStr(e) });
+    }
   }
 
   // /api/cli-log — a terminal-run eZrecon command, posted by the ezrecon2 wrapper
@@ -204,12 +278,21 @@ async function api(req, res, url) {
       }
 
       if (op === 'connect' && m === 'POST') {
-        const { id: sessionId } = openSession(id, t);
+        const o = openSession(id, t);
+        try {
+          if (!o.adapter.connected) await o.adapter.connect({ timeoutMs: 12000 });
+        } catch (e) {
+          liveSessions.delete(o.id);
+          return send(res, 502, { error: errStr(e) });
+        }
+        const sessionId = o.id;
         store.updateTarget(id, tid, { sessionRef: sessionId });
         const a = store.startAction(id, { kind: 'session', tool: 'connect', targetId: tid, params: { user } });
-        store.finishAction(id, a.id, { status: 'ok', result: { sessionId } });
-        audit.record({ event: 'session.connect', userId: user, target: targetLabel(t), engagementId: id, detail: { sessionId } });
-        return send(res, 200, { sessionId });
+        const info = { sessionId };
+        if (o.useBridge) Object.assign(info, await bridgeHookup(o.entry, id, tid));
+        store.finishAction(id, a.id, { status: 'ok', result: info });
+        audit.record({ event: 'session.connect', userId: user, target: targetLabel(t), engagementId: id, detail: info });
+        return send(res, 200, info);
       }
 
       if (op === 'cics' && m === 'POST') {
@@ -260,6 +343,8 @@ async function api(req, res, url) {
               }
               throw new Error(msg);
             }
+            // fresh bridge session for this run — point web3270's per-session tools at it
+            if (sess.useBridge && !sess.bridgeWsId) await bridgeHookup(sess, id, tid);
           }
           const result = await cics.run(primName, sess.adapter, b.opts || {});
           // fold notable results back in as findings

@@ -12,6 +12,9 @@ m() { echo -e "  ${YELLOW}•${RESET} $*"; }
 [ -f .env ] && . ./.env
 SEARX_PORT="${SEARX_PORT:-10080}"
 GIBSON_DIR="${GIBSON_DIR:-$HOME/git/GIBSON/gibson-mainframe}"
+BRIDGE_URL="${SECTOOLS_BRIDGE_URL:-ws://127.0.0.1:8081}"
+BRIDGE_HTTP="$(printf '%s' "$BRIDGE_URL" | sed 's#^ws#http#')"
+BRIDGE_RECORD="${SECTOOLS_BRIDGE_RECORD:-true}"
 
 echo
 echo "EZrecon-2 — status"
@@ -50,6 +53,17 @@ elif [ -f sectools/server.js ]; then
   t=$([ -d sectools/node_modules ] && echo "deps ok" || echo "run: cd sectools && npm install")
   m "SecTools shell present, not running — ./start.sh --sectools  ($t)"
 else m "sectools/ not built"; fi
+
+# ── web3270 bridge (viaBridge targets → its Session Viewer / Recorder / MITM) ──
+if [ "$BRIDGE_RECORD" != "false" ]; then rec="auto-record on connect"; else rec="recording off (SECTOOLS_BRIDGE_RECORD=false)"; fi
+if curl -sf -m 2 -o /dev/null "$BRIDGE_HTTP/health" 2>/dev/null; then
+  y "web3270 bridge up at ${BRIDGE_URL}  ·  ${rec}"
+  echo -e "  ${DIM}  viaBridge targets run through it; recordings land in sectools/data/bridge-recordings/${RESET}"
+elif docker ps --format '{{.Names}}' 2>/dev/null | grep -q '^tn3270-bridge$'; then
+  m "web3270 bridge container up but not answering on ${BRIDGE_HTTP} — check its logs"
+else
+  m "web3270 bridge not running (${BRIDGE_URL}) — viaBridge targets will fail; start it in ~/git/web3270/Bridge_server"
+fi
 
 echo
 echo -e "${DIM}targets:  eZrecon → sighberbank.com   ·   CICSpwn → GIBSON 127.0.0.1:23 CICS${RESET}"

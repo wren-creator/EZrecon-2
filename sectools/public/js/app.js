@@ -219,9 +219,10 @@ function renderRail() {
   for (const t of state.eng.targets) {
     const d = document.createElement('div'); d.className = 'tgt' + (t.authorised ? ' authd' : '');
     const esm = t.esm ? `ESM ${t.esm.product} ${t.esm.confidence}${t.esm.reconcile ? ' ✓recon' : ''}` : (t.sessionRef ? 'connected' : 'not connected');
-    d.innerHTML = `<span class="prov">${esc(t.provenance)}</span>${t.viaBridge ? '<span class="prov bridge">via bridge</span>' : ''}
+    d.innerHTML = `<span class="prov">${esc(t.provenance)}</span>${t.viaBridge ? `<span class="prov bridge">via bridge${t.bridgeWsId != null ? ' · ws ' + esc(t.bridgeWsId) : ''}</span>` : ''}
       <div class="addr">${esc(t.addr)}${t.port ? ':' + t.port : ''}</div>
       <div class="meta">${esc(esm)}</div>
+      ${t.viaBridge && t.bridgeWsId != null ? `<div class="meta bridgehint">web3270 session <b>${esc(t.bridgeWsId)}</b> — open its Session Viewer / Proxy Viewer and filter to this session; Traffic Recorder is auto-started.</div>` : ''}
       <div class="authline"></div>
       <div class="acts"></div>`;
     const authline = d.querySelector('.authline');
@@ -405,8 +406,9 @@ async function runConsole(line) {
       case 'help':
         cprint([
           'commands (all routed through the audited API):',
+          '  ezrecon <subcommand> [args…]        run any eZrecon command, output here, logged',
           '  engagement list|new <name>|use <id>|rename <name>|delete <id>',
-          '  recon auto|dns|active <domain>      run eZrecon (active needs an authorised target)',
+          '  recon auto|dns|active <domain>      eZrecon into the engagement (folds findings in)',
           '  targets                             list targets',
           '  target add <addr> [port] [--bridge] | target rm <addr|id> | target clear',
           '  authorise <addr|id> --approver X --scope "…"   grant active/CICS authorisation',
@@ -420,6 +422,17 @@ async function runConsole(line) {
         break;
       case 'clear': $('#conOut').innerHTML = ''; break;
       case 'whoami': cprint(operator()); break;
+      case 'ezrecon': case 'ezrecon2': case 'ez': {
+        if (!rest.length) { cprint('  usage: ezrecon <subcommand> [args…]   e.g. ezrecon dns example.com', 'e'); break; }
+        cprint('  $ ezrecon ' + rest.join(' ') + ' …', 'm');
+        const r = await apiPost('/ez', { argv: rest, engagementId: eid });
+        if (r.error) { cprint('  ' + r.error, 'e'); break; }
+        const text = String(r.stdout || '').replace(/\x1b\[[0-9;]*m/g, '').replace(/\s+$/, '');
+        if (text) for (const l of text.split('\n')) cprint('  ' + l);
+        if (r.stderr && r.stderr.trim()) cprint('  [stderr] ' + r.stderr.trim().slice(0, 800), 'e');
+        cprint(`  (exit ${r.exit}, ${r.ms}ms) — logged`, r.exit === 0 ? 'k' : 'e');
+        break;
+      }
       case 'engagement': case 'eng': {
         const s2 = (rest[0] || '').toLowerCase();
         if (s2 === 'list' || !s2) {

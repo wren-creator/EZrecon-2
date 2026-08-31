@@ -119,6 +119,8 @@ table.grid tr:last-child td{border-bottom:0}
 .tgt .addr{font-family:var(--mono);font-size:.74rem;font-weight:500;word-break:break-all}
 .tgt .prov{display:inline-block;font-family:var(--cond);text-transform:uppercase;letter-spacing:.04em;font-size:.52rem;color:var(--flow);background:var(--flow-bg);border-radius:2px;padding:.08rem .3rem;margin-bottom:.3rem}
 .tgt .prov.bridge{color:var(--active);background:var(--active-bg);margin-left:.25rem}
+.tgt .bridgehint{color:var(--active);font-size:.62rem;line-height:1.35;margin-top:.2rem}
+.tgt .bridgehint b{font-family:var(--mono)}
 .viabridge{display:flex;align-items:center;gap:.4rem;font-size:.75rem;color:var(--ink);width:100%;margin-top:.3rem;cursor:pointer;white-space:nowrap}
 .rail-add .viabridge input[type=checkbox]{width:1rem;height:1rem;flex:none;margin:0;accent-color:var(--active)}
 .tgt .meta{font-size:.66rem;color:var(--ink2);margin:.15rem 0 .4rem}

@@ -60,6 +60,9 @@ test('adapter drives a web3270-style bridge over WebSocket', async () => {
     assert.match(after, /Sign-on complete/);
     assert.equal(a.cols, 80);
     assert.ok(Array.isArray(a.fields()));
+    // hookup inputs the server needs to point web3270's per-session tools at us
+    assert.equal(a.driver.wsId, 'w1');
+    assert.match(a.driver.httpBase, /^http:\/\/127\.0\.0\.1:\d+$/);
     a.disconnect();
   } finally {
     await bridge.close();

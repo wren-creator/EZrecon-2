@@ -30,6 +30,8 @@ module.exports = {
   // web3270 bridge — targets flagged {viaBridge:true} connect through this
   // instead of raw TCP, so the bridge's MITM / Recorder / Anomaly taps see it
   bridgeUrl: process.env.SECTOOLS_BRIDGE_URL || 'ws://127.0.0.1:8081',
+  // auto-start a Traffic Recording on the bridge for each viaBridge session
+  bridgeRecord: process.env.SECTOOLS_BRIDGE_RECORD !== 'false',
 
   // Rules of engagement.
   //  · default: active recon + state-changing CICS need a per-target authorisation

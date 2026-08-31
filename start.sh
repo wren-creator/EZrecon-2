@@ -70,7 +70,8 @@ if [ "$WANT_SECTOOLS" -eq 1 ]; then
     ok "SecTools shell already on :$SECTOOLS_PORT"
   elif [ -f sectools/server.js ]; then
     [ -d sectools/node_modules ] || ( cd sectools && npm install >/dev/null 2>&1 )
-    ( cd sectools && SECTOOLS_PORT="$SECTOOLS_PORT" nohup node server.js >/tmp/ezrecon2-sectools.log 2>&1 </dev/null & )
+    # run with the full path so pgrep/pkill 'sectools/server.js' can find it
+    SECTOOLS_PORT="$SECTOOLS_PORT" nohup node "$(pwd)/sectools/server.js" >/tmp/ezrecon2-sectools.log 2>&1 </dev/null &
     for i in 1 2 3 4 5; do sleep 1; nc -z 127.0.0.1 "$SECTOOLS_PORT" >/dev/null 2>&1 && break; done
     nc -z 127.0.0.1 "$SECTOOLS_PORT" >/dev/null 2>&1 \
       && ok "SecTools shell → http://127.0.0.1:$SECTOOLS_PORT  (log: /tmp/ezrecon2-sectools.log)" \

@@ -141,4 +141,27 @@ function runRecon(o = {}) {
   });
 }
 
-module.exports = { runRecon, parseReport, candidatesFrom };
+/**
+ * Run any eZrecon command and capture its output (no --report). For the
+ * console's `ezrecon <args>` pass-through. argv is passed as an array, never a
+ * shell string, so nothing the user types is interpreted by a shell.
+ */
+function runRaw(argv, o = {}) {
+  const bin = o.ezreconBin || cfg.ezreconBin;
+  const timeoutMs = o.timeoutMs || cfg.ezreconTimeoutMs;
+  return new Promise((resolve, reject) => {
+    const child = spawn(bin, argv, { env: process.env });
+    let out = '';
+    let err = '';
+    const t = setTimeout(() => {
+      child.kill('SIGKILL');
+      reject(new Error(`ezrecon ${argv.join(' ')} timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+    child.stdout.on('data', (d) => { out += d; });
+    child.stderr.on('data', (d) => { err += d; });
+    child.on('error', (e) => { clearTimeout(t); reject(e); });
+    child.on('close', (code) => { clearTimeout(t); resolve({ stdout: out, stderr: err, exit: code }); });
+  });
+}
+
+module.exports = { runRecon, runRaw, parseReport, candidatesFrom };

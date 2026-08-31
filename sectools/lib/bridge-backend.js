@@ -30,6 +30,7 @@ class BridgeBackend extends EventEmitter {
   constructor(o = {}) {
     super();
     this.bridgeUrl = (o.bridgeUrl || 'ws://127.0.0.1:8081').replace(/\/+$/, '');
+    this.httpBase = this.bridgeUrl.replace(/^ws/, 'http'); // for /api/recording, /api/traffic, /api/esm-fingerprint
     this.frame = {
       type: 'connect',
       host: o.host,

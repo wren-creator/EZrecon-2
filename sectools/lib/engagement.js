@@ -45,6 +45,7 @@ function makeTarget(t = {}) {
     esm: t.esm || null,                // { product, confidence, evidence[], source }
     sessionRef: t.sessionRef || null,  // live session id once connected
     viaBridge: !!t.viaBridge,          // connect through the web3270 bridge, not raw TCP
+    bridgeWsId: t.bridgeWsId || null,  // that bridge's session id, once connected — feed it to web3270's Session Viewer
     authorised: t.authorised || null,  // { by, approver, scope, at } — gates active actions
     tags: Array.isArray(t.tags) ? t.tags : [],
     createdAt: t.createdAt || now(),

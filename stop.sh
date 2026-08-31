@@ -19,8 +19,14 @@ else
 fi
 
 # ── SecTools shell ────────────────────────────────────────────────────
-if pgrep -f 'sectools/server.js' >/dev/null 2>&1; then
-  pkill -f 'sectools/server.js' && ok "SecTools shell stopped"
+if pgrep -f 'sectools/server\.js|sectools.*node server\.js' >/dev/null 2>&1 \
+   || lsof -nP -iTCP:"${SECTOOLS_PORT:-8899}" -sTCP:LISTEN >/dev/null 2>&1; then
+  pkill -f 'sectools/server\.js' 2>/dev/null
+  # also catch `node server.js` started from inside sectools/
+  for p in $(lsof -nP -tiTCP:"${SECTOOLS_PORT:-8899}" -sTCP:LISTEN 2>/dev/null); do
+    ps -o command= -p "$p" | grep -q 'server\.js' && kill "$p" 2>/dev/null
+  done
+  ok "SecTools shell stopped"
 else
   info "SecTools shell not running"
 fi
